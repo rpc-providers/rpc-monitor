@@ -36,4 +36,4 @@ scrape_configs:
 ```
 
 ## WSS Endpoint configuration
-The WSS endpoint are configured by a file `config-<zone>.sh`. So the configuration for zone `eu-central` can be found in [config-eu-central.sh](https://github.com/rpc-providers/rpc-monitor/blob/master/config-eu-central.sh). Providers are placed in principle in their primary zone but can be placed in multiple zones (for example when using geo steered load balancing). Updates can be requested by creating a pull request of creating an [issue](https://github.com/rpc-providers/rpc-monitor/issues).
+The WSS endpoints are configured by a file `config-<zone>.sh`. So the configuration for zone `eu-central` can be found in [config-eu-central.sh](https://github.com/rpc-providers/rpc-monitor/blob/master/config-eu-central.sh). Providers are placed in principle in their primary zone but can be placed in multiple zones (for example when using geo steered load balancing). Updates can be requested by creating a pull request of creating an [issue](https://github.com/rpc-providers/rpc-monitor/issues).
