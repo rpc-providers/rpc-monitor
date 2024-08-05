@@ -19,7 +19,7 @@ At this moment the data is updated every 15 minutes.
 A request for an extra endpoint can be done by creating an [issue](https://github.com/rpc-providers/rpc-monitor/issues).
 
 ## Prometheus configuration
-If you want to include endpoints in your own prometheus scraper here is an example code:
+If you want to include endpoints in your own prometheus scraper here is an example configuration:
 
 ```
 global:
@@ -36,4 +36,4 @@ scrape_configs:
 ```
 
 ## WSS Endpoint configuration
-The WSS endpoint are configured in the code by a file `config-<zone>.sh` so for example the configuration for zone `eu-central` can be found [here](https://github.com/rpc-providers/rpc-monitor/blob/master/config-eu-central.sh). Providers are placed in principle in their primary zone but can be placed in multiple zones (for example when using geo steered load balancing).
+The WSS endpoint are configured by a file `config-<zone>.sh`. So the configuration for zone `eu-central` can be found in [config-eu-central.sh](https://github.com/rpc-providers/rpc-monitor/blob/master/config-eu-central.sh). Providers are placed in principle in their primary zone but can be placed in multiple zones (for example when using geo steered load balancing). Updates can be requested by creating a pull request of creating an [issue](https://github.com/rpc-providers/rpc-monitor/issues).
