@@ -1,7 +1,7 @@
 # RPC-providers
 
 ## Monitoring
-Monitoring is done with grafana and prometheus with alertmanager for alerting. The public monitor is reachable through this [link](https://monitor.rpc-providers.net/d/bdkaq43z8xybka/rpc-providers?orgId=1). You can choose between networks, monitoring zones and providers in the dashboard selector or preselect via link parameters.
+Monitoring is done with grafana, prometheus endpoints in different geographical zones and alertmanager for alerting. The public monitor is reachable through this [link](https://monitor.rpc-providers.net/d/bdkaq43z8xybka/rpc-providers?orgId=1). You can choose between networks, monitoring zones and providers in the dashboard selector or preselect via link parameters.
 
 For example:
 * [All polkadot endpoints from all monitoring zones](https://monitor.rpc-providers.net/d/bdkaq43z8xybka/rpc-providers?orgId=1&var-zone=All&var-network=polkadot&var-wss=All)
@@ -16,7 +16,7 @@ There are multipele prometheus monitoring endpoints active:
 
 At this moment the data is updated every 15 minutes. 
 
-A request for an extra endpoint can be by creating an [issue](https://github.com/rpc-providers/rpc-monitor/issues).
+A request for an extra endpoint can be done by creating an [issue](https://github.com/rpc-providers/rpc-monitor/issues).
 
 ## Prometheus configuration
 If you want to include endpoints in your own prometheus scraper here is an example code:
