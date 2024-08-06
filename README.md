@@ -1,9 +1,10 @@
 # RPC-providers
 
 ## Monitoring
-Monitoring is done with grafana, prometheus endpoints in different geographical zones and alertmanager for alerting. The public monitor is reachable through this [link](https://monitor.rpc-providers.net/d/bdkaq43z8xybka/rpc-providers?orgId=1). You can choose between networks, monitoring zones and providers in the dashboard selector or preselect via link parameters.
+Monitoring is done with grafana, prometheus endpoints in different geographical zones and alertmanager for alerting. The public monitor is reachable here: 
+* [https://monitor.rpc-providers.net](https://monitor.rpc-providers.net/d/bdkaq43z8xybka/rpc-providers?orgId=1)
 
-For example:
+You can choose between networks, monitoring zones and providers in the dashboard selector or preselect via link parameters, for example:
 * [All polkadot endpoints from all monitoring zones](https://monitor.rpc-providers.net/d/bdkaq43z8xybka/rpc-providers?orgId=1&var-zone=All&var-network=polkadot&var-wss=All)
 * [All kusama endpoints from all monitoring zones](https://monitor.rpc-providers.net/d/bdkaq43z8xybka/rpc-providers?orgId=1&var-zone=All&var-network=kusama&var-wss=All)
 * [All polkadot endpoints from zone eu-central](https://monitor.rpc-providers.net/d/bdkaq43z8xybka/rpc-providers?orgId=1&var-zone=eu-central&var-network=polkadot&var-wss=All)
