@@ -43,4 +43,4 @@ The WSS endpoints are configured by a file `config-<zone>.sh`. So the configurat
 When an alert is triggered an alert is send to this telegram group:
 * https://t.me/+8TP1EWkPyAA1Njc0
 
-Alerting parameters will be further defined when more monitoring data is available.
+Alerting parameters will be further defined when more monitoring data is available. They are now defined at average plus 2 standard deviations of the last 30 days. 
