@@ -6,7 +6,6 @@ declare -A rpcs
 rpcs[wss://rpc.ibp.network/polkadot]=polkadot
 rpcs[wss://rpc.ibp.network/kusama]=kusama
 rpcs[wss://polkadot-public-rpc.blockops.network/ws]=polkadot
-rpcs[wss://kusama-public-rpc.blockops.network/ws]=polkadot
 rpcs[wss://polkadot-rpc.dwellir.com]=polkadot
 rpcs[wss://kusama-rpc.dwellir.com]=kusama
 rpcs[wss://rpc.dotters.network/polkadot]=polkadot
