@@ -2,7 +2,7 @@
 home="/opt/rpc-monitor"
 output="/var/www/prom"
 prom="$output/index.txt.new"
-daily="$output/daily.txt"
+errorprom="$output/error.txt.new"
 promdest="$output/index.txt"
 error="error.log"
 source /root/.nvm/nvm.sh
@@ -46,6 +46,7 @@ for rpc in ${!rpcs[@]}
     if [[ $time =~ ^[+-]?[0-9]+([.][0-9]+)?$ ]]; then
       echo "rpc_getblockzero{wss=\"$rpc\",network=\"$network\",zone=\"$zone\"} $time $timestamp" >> $prom
     else
+      echo "rpc_error{wss=\"$rpc\",network=\"$network\",zone=\"$zone\"} blockzeroerror $timestamp" >> $errorprom
       echo "`date`: $rpc error $time" >> $error 
     fi
   done
@@ -63,6 +64,7 @@ for rpc in ${!rpcs[@]}
     if [[ $time =~ ^[+-]?[0-9]+([.][0-9]+)?$ ]]; then
       echo "rpc_connect{wss=\"$rpc\",network=\"$network\",zone=\"$zone\"} $time $timestamp" >> $prom
     else
+      echo "rpc_error{wss=\"$rpc\",network=\"$network\",zone=\"$zone\"} connecteroerror $timestamp" >> $errorprom
       echo "`date`: $rpc error $time" >> $error
     fi
   done
@@ -78,6 +80,7 @@ for rpc in ${!rpcs[@]}
     #timestamp=$(date +%s%3N)
     if [ -z "$version" ]
       then
+         echo "rpc_error{wss=\"$rpc\",network=\"$network\",zone=\"$zone\"} connecteroerror $timestamp" >> $errorprom
          echo "rpc_version{wss=\"$rpc\",version=\"unknown\",network=\"$network\",zone=\"$zone\"} 1 $timestamp" >> $error
       else
          echo "rpc_version{wss=\"$rpc\",version=\"$version\",network=\"$network\",zone=\"$zone\"} 1 $timestamp" >> $prom
@@ -85,5 +88,13 @@ for rpc in ${!rpcs[@]}
   done
 
 echo "" >> $prom
+
+if [ -f $errorprom ]; then
+  echo "# HELP rpc_error rpc-error" >> $prom
+  echo "# TYPE rpc_error gauge" >> $prom
+  cat $errorprom >> $prom
+  rm $errorprom
+  echo "" >> $prom
+fi
 
 cp $prom $promdest
