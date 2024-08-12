@@ -59,7 +59,7 @@ for rpc in ${!rpcs[@]}
   do
     network=${rpcs[$rpc]}
     rpcdomain=$(echo $rpc | cut -d\/ -f3,4)
-    time=$(timeout 10s /usr/bin/time -f "%e" curl "https://$rpcdomain:443" 2>&1 | tail -n1)
+    time=$(timeout 10s /usr/bin/time -f "%e" curl "https://$rpcdomain" 2>&1 | tail -n1)
     #timestamp=$(date +%s%3N)
     if [[ $time =~ ^[+-]?[0-9]+([.][0-9]+)?$ ]]; then
       echo "rpc_connect{wss=\"$rpc\",network=\"$network\",zone=\"$zone\"} $time $timestamp" >> $prom
