@@ -76,7 +76,7 @@ echo "# TYPE rpc_version gauge" >> $prom
 for rpc in ${!rpcs[@]}
   do
     network=${rpcs[$rpc]}
-    version=$(timeout 6s polkadot-js-api --ws "$rpc" rpc.system.version 2>&1 | grep version | cut -d\" -f4)
+    version=$(timeout 10s polkadot-js-api --ws "$rpc" rpc.system.version 2>&1 | grep version | cut -d\" -f4)
     #timestamp=$(date +%s%3N)
     if [ -z "$version" ]
       then
