@@ -47,7 +47,7 @@ for rpc in ${!rpcs[@]}
       echo "rpc_getblockzero{wss=\"$rpc\",network=\"$network\",zone=\"$zone\"} $time $timestamp" >> $prom
     else
       echo "rpc_error{wss=\"$rpc\",network=\"$network\",zone=\"$zone\"} 1 $timestamp" >> $errorprom
-      echo "`date`: $rpc error: blockzero=$version" >> $error
+      echo "`date`: $rpc error: blockzero=$time" >> $error
     fi
   done
 
@@ -65,7 +65,7 @@ for rpc in ${!rpcs[@]}
       echo "rpc_connect{wss=\"$rpc\",network=\"$network\",zone=\"$zone\"} $time $timestamp" >> $prom
     else
       echo "rpc_error{wss=\"$rpc\",network=\"$network\",zone=\"$zone\"} 1 $timestamp" >> $errorprom
-      echo "`date`: $rpc error: connect=$version" >> $error
+      echo "`date`: $rpc error: connect=$time" >> $error
     fi
   done
 
