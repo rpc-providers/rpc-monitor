@@ -61,13 +61,13 @@ for rpc in ${!rpcs[@]}
     network=${rpcs[$rpc]}
     rpcdomain=$(echo $rpc | cut -d\/ -f3,4)
     time=$(timeout 10s /usr/bin/time -f "%e" curl "https://$rpcdomain" 2>&1 | tail -n1)
-    #timestamp=$(date +%s%3N)
-    if [[ $time =~ ^[+-]?[0-9]+([.][0-9]+)?$ ]]; then
+    code=$(curl -LI "https://$rpcdomain" -o /dev/null -w '%{http_code}\n' -s)
+    if [ $code == "405" ]; then
       echo "rpc_connect{wss=\"$rpc\",network=\"$network\",zone=\"$zone\"} $time $timestamp" >> $prom
       echo "rpc_error{wss=\"$rpc\",network=\"$network\",zone=\"$zone\",error=\"connect\"} 0 $timestamp" >> $errorprom
     else
       echo "rpc_error{wss=\"$rpc\",network=\"$network\",zone=\"$zone\",error=\"connect\"} 1 $timestamp" >> $errorprom
-      echo "`date`: $rpc error: connect=$time" >> $error
+      echo "`date`: $rpc error: code=$code, connect=$time" >> $error
     fi
   done
 
@@ -79,10 +79,9 @@ for rpc in ${!rpcs[@]}
   do
     network=${rpcs[$rpc]}
     version=$(timeout 10s polkadot-js-api --ws "$rpc" rpc.system.version 2>&1 | grep version | cut -d\" -f4)
-    #timestamp=$(date +%s%3N)
     if [ -z "$version" ]
       then
-         echo "rpc_error{wss=\"$rpc\",network=\"$network\",zone=\"$zone\",error=\"version\"} 1 $timestamp" >> $errorprom
+         #echo "rpc_error{wss=\"$rpc\",network=\"$network\",zone=\"$zone\",error=\"version\"} 1 $timestamp" >> $errorprom
          echo "`date`: $rpc error: version=$version" >> $error
       else
          echo "rpc_version{wss=\"$rpc\",version=\"$version\",network=\"$network\",zone=\"$zone\"} 1 $timestamp" >> $prom
