@@ -45,8 +45,9 @@ for rpc in ${!rpcs[@]}
     #timestamp=$(date +%s%3N)
     if [[ $time =~ ^[+-]?[0-9]+([.][0-9]+)?$ ]]; then
       echo "rpc_getblockzero{wss=\"$rpc\",network=\"$network\",zone=\"$zone\"} $time $timestamp" >> $prom
+      echo "rpc_error{wss=\"$rpc\",network=\"$network\",zone=\"$zone\",error=\"blockzero\"} 0 $timestamp" >> $errorprom
     else
-      echo "rpc_error{wss=\"$rpc\",network=\"$network\",zone=\"$zone\"} 1 $timestamp" >> $errorprom
+      echo "rpc_error{wss=\"$rpc\",network=\"$network\",zone=\"$zone\",error=\"blockzero\"} 1 $timestamp" >> $errorprom
       echo "`date`: $rpc error: blockzero=$time" >> $error
     fi
   done
@@ -63,8 +64,9 @@ for rpc in ${!rpcs[@]}
     #timestamp=$(date +%s%3N)
     if [[ $time =~ ^[+-]?[0-9]+([.][0-9]+)?$ ]]; then
       echo "rpc_connect{wss=\"$rpc\",network=\"$network\",zone=\"$zone\"} $time $timestamp" >> $prom
+      echo "rpc_error{wss=\"$rpc\",network=\"$network\",zone=\"$zone\",error=\"connect\"} 0 $timestamp" >> $errorprom
     else
-      echo "rpc_error{wss=\"$rpc\",network=\"$network\",zone=\"$zone\"} 1 $timestamp" >> $errorprom
+      echo "rpc_error{wss=\"$rpc\",network=\"$network\",zone=\"$zone\",error=\"connect\"} 1 $timestamp" >> $errorprom
       echo "`date`: $rpc error: connect=$time" >> $error
     fi
   done
@@ -80,21 +82,29 @@ for rpc in ${!rpcs[@]}
     #timestamp=$(date +%s%3N)
     if [ -z "$version" ]
       then
-         echo "rpc_error{wss=\"$rpc\",network=\"$network\",zone=\"$zone\"} 1 $timestamp" >> $errorprom
+         echo "rpc_error{wss=\"$rpc\",network=\"$network\",zone=\"$zone\",error=\"version\"} 1 $timestamp" >> $errorprom
          echo "`date`: $rpc error: version=$version" >> $error
       else
          echo "rpc_version{wss=\"$rpc\",version=\"$version\",network=\"$network\",zone=\"$zone\"} 1 $timestamp" >> $prom
+         echo "rpc_error{wss=\"$rpc\",network=\"$network\",zone=\"$zone\",error=\"version\"} 0 $timestamp" >> $errorprom
     fi
   done
 
 echo "" >> $prom
 
-if [ -f $errorprom ]; then
-  echo "# HELP rpc_error rpc-error" >> $prom
-  echo "# TYPE rpc_error gauge" >> $prom
-  cat $errorprom >> $prom
-  rm $errorprom
-  echo "" >> $prom
-fi
+echo "# HELP rpc_error rpc-error" >> $prom
+echo "# TYPE rpc_error gauge" >> $prom
+cat $errorprom >> $prom
+rm $errorprom
+echo "" >> $prom
+
+timestamp2=$(date +%s%3N)
+scripttime="$((timestamp2-timestamp))"
+scripttimesec=`echo "scale=2;${scripttime}/1000" | bc`
+echo "# HELP rpc_script Script run duration" >> $prom
+echo "# TYPE rpc_script gauge" >> $prom
+echo "rpc_script{zone=\"$zone\"} $scripttimesec $timestamp" >> $prom
+
+echo "" >> $prom
 
 cp $prom $promdest
