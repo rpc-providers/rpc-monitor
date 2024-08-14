@@ -11,6 +11,9 @@ source $home/config-$zone.sh
 
 cd $home
 
+# auto update
+git pull >> $error
+
 IFS=$'\n'
 
 pids=$(pgrep monitor | wc -l)
