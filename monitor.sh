@@ -19,7 +19,7 @@ if [ $pids -ne "2" ]; then
   exit
 fi
 
-# Error handling
+ Error handling
 error() {
     echo "Error on line $1"
     echo "Exiting"
@@ -65,11 +65,12 @@ for rpc in ${!rpcs[@]}
   do
     network=${rpcs[$rpc]}
     rpcdomain=$(echo $rpc | cut -d\/ -f3,4)
-    time=$(timeout 60s /usr/bin/time -f "%e" curl "https://$rpcdomain" 2>&1 | tail -n1)
     code=$(curl -LI "https://$rpcdomain" -o /dev/null -w '%{http_code}\n' -s)
-    websocket=$(/usr/local/bin/websocat -uU $rpc 2> /dev/null)
+    if [ $? -eq 1 ]; then
+      code="error"
+    fi
+    time=$(/usr/bin/time -f "%e" /usr/local/bin/websocat -q -uU $rpc 2>&1 | tail -n1)
     if [ $? -eq 0 ]; then
-    #if [ $code == "405" ]; then
       echo "rpc_connect{wss=\"$rpc\",network=\"$network\",zone=\"$zone\"} $time $timestamp" >> $prom
       echo "rpc_error{wss=\"$rpc\",network=\"$network\",zone=\"$zone\",error=\"connect\"} 0 $timestamp" >> $errorprom
       echo "rpc_error{wss=\"$rpc\",network=\"$network\",zone=\"$zone\",error=\"code\"} $code $timestamp" >> $errorprom
