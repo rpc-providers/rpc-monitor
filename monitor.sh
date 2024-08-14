@@ -42,14 +42,19 @@ for rpc in ${!rpcs[@]}
       zerohash="0xb0a8d493285c2df73290dfb7e61f870f17b41801197a149ca93654499ea3dafe"
     fi
     time=$(timeout 30s /usr/bin/time -f "%e" polkadot-js-api --ws "$rpc" rpc.chain.getBlock $zerohash 2>&1 | tail -n1)
-    #timestamp=$(date +%s%3N)
-    if [[ $time =~ ^[+-]?[0-9]+([.][0-9]+)?$ ]]; then
-      echo "rpc_getblockzero{wss=\"$rpc\",network=\"$network\",zone=\"$zone\"} $time $timestamp" >> $prom
-      echo "rpc_error{wss=\"$rpc\",network=\"$network\",zone=\"$zone\",error=\"blockzero\"} 0 $timestamp" >> $errorprom
-    else
-      echo "rpc_error{wss=\"$rpc\",network=\"$network\",zone=\"$zone\",error=\"blockzero\"} 1 $timestamp" >> $errorprom
-      echo "`date`: $rpc error: blockzero=$time" >> $error
-    fi
+    if [ $? -eq 0 ] 
+      then 
+        if [[ $time =~ ^[+-]?[0-9]+([.][0-9]+)?$ ]]; then
+          echo "rpc_getblockzero{wss=\"$rpc\",network=\"$network\",zone=\"$zone\"} $time $timestamp" >> $prom
+          echo "rpc_error{wss=\"$rpc\",network=\"$network\",zone=\"$zone\",error=\"blockzero\"} 0 $timestamp" >> $errorprom
+	else
+          echo "rpc_error{wss=\"$rpc\",network=\"$network\",zone=\"$zone\",error=\"blockzero\"} 1 $timestamp" >> $errorprom
+          echo "`date`: $rpc error: blockzero=$time" >> $error
+	fi  
+      else 
+        echo "rpc_error{wss=\"$rpc\",network=\"$network\",zone=\"$zone\",error=\"blockzero\"} 1 $timestamp" >> $errorprom
+        echo "`date`: $rpc error: blockzero=$time" >> $error
+      fi
   done
 
 echo "" >> $prom
@@ -62,11 +67,15 @@ for rpc in ${!rpcs[@]}
     rpcdomain=$(echo $rpc | cut -d\/ -f3,4)
     time=$(timeout 10s /usr/bin/time -f "%e" curl "https://$rpcdomain" 2>&1 | tail -n1)
     code=$(curl -LI "https://$rpcdomain" -o /dev/null -w '%{http_code}\n' -s)
-    if [ $code == "405" ]; then
+    websocket=$(/usr/local/bin/websocat -uU $rpc 2> /dev/null)
+    if [ $? -eq 0 ]; then
+    #if [ $code == "405" ]; then
       echo "rpc_connect{wss=\"$rpc\",network=\"$network\",zone=\"$zone\"} $time $timestamp" >> $prom
       echo "rpc_error{wss=\"$rpc\",network=\"$network\",zone=\"$zone\",error=\"connect\"} 0 $timestamp" >> $errorprom
+      echo "rpc_error{wss=\"$rpc\",network=\"$network\",zone=\"$zone\",error=\"code\"} $code $timestamp" >> $errorprom
     else
       echo "rpc_error{wss=\"$rpc\",network=\"$network\",zone=\"$zone\",error=\"connect\"} 1 $timestamp" >> $errorprom
+      echo "rpc_error{wss=\"$rpc\",network=\"$network\",zone=\"$zone\",error=\"code\"} $code $timestamp" >> $errorprom
       echo "`date`: $rpc error: code=$code, connect=$time" >> $error
     fi
   done
