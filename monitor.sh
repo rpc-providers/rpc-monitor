@@ -22,7 +22,7 @@ if [ $pids -ne "2" ]; then
   exit
 fi
 
- Error handling
+# Error handling
 error() {
     echo "Error on line $1"
     echo "Exiting"
