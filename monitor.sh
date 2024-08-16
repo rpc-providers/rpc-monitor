@@ -44,7 +44,7 @@ for rpc in ${!rpcs[@]}
     elif [ $network = "kusama" ]; then
       zerohash="0xb0a8d493285c2df73290dfb7e61f870f17b41801197a149ca93654499ea3dafe"
     fi
-    time=$(timeout 90s /usr/bin/time -f "%e" polkadot-js-api --ws "$rpc" rpc.chain.getBlock $zerohash 2>&1 | tail -n1)
+    time=$(timeout 30s /usr/bin/time -f "%e" polkadot-js-api --ws "$rpc" rpc.chain.getBlock $zerohash 2>&1 | tail -n1)
     if [ $? -eq 0 ] 
       then 
         if [[ $time =~ ^[+-]?[0-9]+([.][0-9]+)?$ ]]; then
@@ -72,7 +72,7 @@ for rpc in ${!rpcs[@]}
     if [ $? -eq 1 ]; then
       code="error"
     fi
-    time=$(/usr/bin/time -f "%e" /usr/local/bin/websocat -q -uU $rpc 2>&1 | tail -n1)
+    time=$(/usr/bin/timeout --foreground 5s /usr/bin/time -f "%e" /usr/local/bin/websocat -q -uU $rpc 2>&1)
     if [ $? -eq 0 ]; then
       echo "rpc_connect{wss=\"$rpc\",network=\"$network\",zone=\"$zone\"} $time $timestamp" >> $prom
       echo "rpc_error{wss=\"$rpc\",network=\"$network\",zone=\"$zone\",error=\"connect\"} 0 $timestamp" >> $errorprom
