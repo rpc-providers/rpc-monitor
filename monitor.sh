@@ -22,15 +22,6 @@ if [ $pids -ne "2" ]; then
   exit
 fi
 
-# Error handling
-error() {
-    echo "Error on line $1"
-    echo "Exiting"
-    exit 1
-}
-
-trap 'error $LINENO' ERR
-
 timestamp=$(date +%s%3N)
 
 echo "# HELP rpc_getblockzero time to get block 0" > $prom
@@ -44,7 +35,7 @@ for rpc in ${!rpcs[@]}
     elif [ $network = "kusama" ]; then
       zerohash="0xb0a8d493285c2df73290dfb7e61f870f17b41801197a149ca93654499ea3dafe"
     fi
-    time=$(timeout 30s /usr/bin/time -f "%e" polkadot-js-api --ws "$rpc" rpc.chain.getBlock $zerohash 2>&1 | tail -n1)
+    time=$(timeout 20s /usr/bin/time -f "%e" polkadot-js-api --ws "$rpc" rpc.chain.getBlock $zerohash 2>&1 | tail -n1)
     if [ $? -eq 0 ] 
       then 
         if [[ $time =~ ^[+-]?[0-9]+([.][0-9]+)?$ ]]; then
@@ -68,16 +59,20 @@ for rpc in ${!rpcs[@]}
   do
     network=${rpcs[$rpc]}
     rpcdomain=$(echo $rpc | cut -d\/ -f3,4)
-    code=$(curl -LI "https://$rpcdomain" -o /dev/null -w '%{http_code}\n' -s)
-    if [ $? -eq 1 ]; then
-      code="error"
-    fi
     time=$(/usr/bin/timeout --foreground 5s /usr/bin/time -f "%e" /usr/local/bin/websocat -q -uU $rpc 2>&1)
     if [ $? -eq 0 ]; then
+      code=$(curl -LI "https://$rpcdomain" -o /dev/null -w '%{http_code}\n' -s)
+      if [ $? -ne 0 ]; then
+        code="error"
+      fi
       echo "rpc_connect{wss=\"$rpc\",network=\"$network\",zone=\"$zone\"} $time $timestamp" >> $prom
       echo "rpc_error{wss=\"$rpc\",network=\"$network\",zone=\"$zone\",error=\"connect\"} 0 $timestamp" >> $errorprom
       echo "rpc_error{wss=\"$rpc\",network=\"$network\",zone=\"$zone\",error=\"code\"} $code $timestamp" >> $errorprom
     else
+      code=$(curl -LI "https://$rpcdomain" -o /dev/null -w '%{http_code}\n' -s)
+      if [ $? -ne 0 ]; then
+        code="error"
+      fi
       echo "rpc_error{wss=\"$rpc\",network=\"$network\",zone=\"$zone\",error=\"connect\"} 1 $timestamp" >> $errorprom
       echo "rpc_error{wss=\"$rpc\",network=\"$network\",zone=\"$zone\",error=\"code\"} $code $timestamp" >> $errorprom
       echo "`date`: $rpc error: code=$code, connect=$time" >> $error
@@ -91,10 +86,9 @@ echo "# TYPE rpc_version gauge" >> $prom
 for rpc in ${!rpcs[@]}
   do
     network=${rpcs[$rpc]}
-    version=$(timeout 60s polkadot-js-api --ws "$rpc" rpc.system.version 2>&1 | grep version | cut -d\" -f4)
+    version=$(timeout 10s polkadot-js-api --ws "$rpc" rpc.system.version 2>&1 | grep version | cut -d\" -f4)
     if [ -z "$version" ]
       then
-         #echo "rpc_error{wss=\"$rpc\",network=\"$network\",zone=\"$zone\",error=\"version\"} 1 $timestamp" >> $errorprom
          echo "`date`: $rpc error: version=$version" >> $error
       else
          echo "rpc_version{wss=\"$rpc\",version=\"$version\",network=\"$network\",zone=\"$zone\"} 1 $timestamp" >> $prom
