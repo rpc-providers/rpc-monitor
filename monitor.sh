@@ -12,7 +12,7 @@ source $home/config-$zone.sh
 cd $home
 
 # auto update
-git pull >> $error
+git pull > /dev/null
 
 IFS=$'\n'
 
@@ -35,7 +35,7 @@ for rpc in ${!rpcs[@]}
     elif [ $network = "kusama" ]; then
       zerohash="0xb0a8d493285c2df73290dfb7e61f870f17b41801197a149ca93654499ea3dafe"
     fi
-    time=$(timeout 20s /usr/bin/time -f "%e" polkadot-js-api --ws "$rpc" rpc.chain.getBlock $zerohash 2>&1 | tail -n1)
+    time=$(timeout 120s /usr/bin/time -f "%e" polkadot-js-api --ws "$rpc" rpc.chain.getBlock $zerohash 2>&1 | tail -n1)
     if [ $? -eq 0 ] 
       then 
         if [[ $time =~ ^[+-]?[0-9]+([.][0-9]+)?$ ]]; then
@@ -59,7 +59,7 @@ for rpc in ${!rpcs[@]}
   do
     network=${rpcs[$rpc]}
     rpcdomain=$(echo $rpc | cut -d\/ -f3,4)
-    time=$(/usr/bin/timeout --foreground 5s /usr/bin/time -f "%e" /usr/local/bin/websocat -q -uU $rpc 2>&1)
+    time=$(/usr/bin/timeout --foreground 120s /usr/bin/time -f "%e" /usr/local/bin/websocat -q -uU $rpc 2>&1)
     if [ $? -eq 0 ]; then
       code=$(curl -LI "https://$rpcdomain" -o /dev/null -w '%{http_code}\n' -s)
       if [ $? -ne 0 ]; then
@@ -86,7 +86,7 @@ echo "# TYPE rpc_version gauge" >> $prom
 for rpc in ${!rpcs[@]}
   do
     network=${rpcs[$rpc]}
-    version=$(timeout 10s polkadot-js-api --ws "$rpc" rpc.system.version 2>&1 | grep version | cut -d\" -f4)
+    version=$(timeout 120s polkadot-js-api --ws "$rpc" rpc.system.version 2>&1 | grep version | cut -d\" -f4)
     if [ -z "$version" ]
       then
          echo "`date`: $rpc error: version=$version" >> $error
