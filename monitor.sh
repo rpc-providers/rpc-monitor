@@ -59,11 +59,11 @@ for rpc in ${!rpcs[@]}
   do
     network=${rpcs[$rpc]}
     rpcdomain=$(echo $rpc | cut -d\/ -f3,4)
-    time=$(/usr/bin/timeout --foreground 120s /usr/bin/time -f "%e" /usr/local/bin/websocat -q -uU $rpc 2>&1)
+    time=$(/usr/bin/timeout --foreground 120s /usr/bin/time -f "%e" /usr/local/bin/websocat -uU $rpc 2>&1)
     if [ $? -eq 0 ]; then
       code=$(curl -LI "https://$rpcdomain" -o /dev/null -w '%{http_code}\n' -s)
       if [ $? -ne 0 ]; then
-        code="error"
+        code="1"
       fi
       echo "rpc_connect{wss=\"$rpc\",network=\"$network\",zone=\"$zone\"} $time $timestamp" >> $prom
       echo "rpc_error{wss=\"$rpc\",network=\"$network\",zone=\"$zone\",error=\"connect\"} 0 $timestamp" >> $errorprom
@@ -71,7 +71,7 @@ for rpc in ${!rpcs[@]}
     else
       code=$(curl -LI "https://$rpcdomain" -o /dev/null -w '%{http_code}\n' -s)
       if [ $? -ne 0 ]; then
-        code="error"
+        code="1"
       fi
       echo "rpc_error{wss=\"$rpc\",network=\"$network\",zone=\"$zone\",error=\"connect\"} 1 $timestamp" >> $errorprom
       echo "rpc_error{wss=\"$rpc\",network=\"$network\",zone=\"$zone\",error=\"code\"} $code $timestamp" >> $errorprom
