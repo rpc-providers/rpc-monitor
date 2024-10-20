@@ -7,5 +7,5 @@ rpcs[wss://rpc-kusama.luckyfriday.io]=kusama
 rpcs[wss://rpc-polkadot.luckyfriday.io]=polkadot
 rpcs[wss://kusama.api.onfinality.io/public-ws]=kusama
 rpcs[wss://polkadot.api.onfinality.io/public-ws]=polkadot
-rpcs[wss://assethub-polkadot.api.onfinality.io/public-ws]=polkadot-assethub
+rpcs[statemint.api.onfinality.io/public-ws]=polkadot-assethub
 rpcs[wss://bridgehub-polkadot.api.onfinality.io/public-ws]=polkadot-bridgehub
