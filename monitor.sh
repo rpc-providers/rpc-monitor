@@ -32,8 +32,22 @@ for rpc in ${!rpcs[@]}
     network=${rpcs[$rpc]}
     if [ $network = "polkadot" ]; then
       zerohash="0x91b171bb158e2d3848fa23a9f1c25182fb8e20313b2c1eb49219da7a70ce90c3"
+    elif [ $network = "polkadot-assethub" ]; then
+      zerohash="0x48239ef607d7928874027a43a67689209727dfb3d3dc5e5b03a39bdc2eda771a"
+    elif [ $network = "polkadot-bridgehub" ]; then
+      zerohash="0xdcf691b5a3fbe24adc99ddc959c0561b973e329b1aef4c4b22e7bb2ddecb4464"
+    elif [ $network = "polkadot-collectives" ]; then
+      zerohash="0x46ee89aa2eedd13e988962630ec9fb7565964cf5023bb351f2b6b25c1b68b0b2"
     elif [ $network = "kusama" ]; then
       zerohash="0xb0a8d493285c2df73290dfb7e61f870f17b41801197a149ca93654499ea3dafe"
+    elif [ $network = "kusama-assethub" ]; then
+      zerohash="0x48239ef607d7928874027a43a67689209727dfb3d3dc5e5b03a39bdc2eda771a"
+    elif [ $network = "kusama-bridgehub" ]; then
+      zerohash="0x00dcb981df86429de8bbacf9803401f09485366c44efbf53af9ecfab03adc7e5"
+    elif [ $network = "kusama-encointer" ]; then
+      zerohash="0x7dd99936c1e9e6d1ce7d90eb6f33bea8393b4bf87677d675aa63c9cb3e8c5b5b"
+    elif [ $network = "westend" ]; then
+      zerohash="0xe143f23803ac50e8f6f8e62695d1ce9e4e1d68aa36c1cd2cfd15340213f3423e"
     fi
     time=$(timeout 120s /usr/bin/time -f "%e" polkadot-js-api --ws "$rpc" rpc.chain.getBlock $zerohash 2>&1 | tail -n1)
     if [ $? -eq 0 ] 
