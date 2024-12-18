@@ -108,7 +108,6 @@ stddev_connect=$(echo "$connection_stats" | awk '{print $2}')
 mean_block=$(echo "$block_stats" | awk '{print $1}')
 stddev_block=$(echo "$block_stats" | awk '{print $2}')
 
-echo "### Statistics"
 echo ""
 echo "- **Connect Time**: Monthly average time to connect to the websocket endpoint (Mean = $mean_connect s, Std Dev = $stddev_connect s)."
 echo "- **Block Retrieval Time**: Monthly average time to retrieve a block from the rpc server (Mean = $mean_block s, Std Dev = $stddev_block s)."
