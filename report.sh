@@ -19,7 +19,7 @@ if [[ -n $1 ]]; then
         exit 1
     fi
     start_time=$(date -d "${month_year}-01" +%s)
-    end_time=$(date -d "${month_year}-01 +1 month -1 second" +%s); echo end_time=$end_time
+    end_time=$(date -d "${month_year}-01 +1 month -1 second" +%s)
     report_date=$(date -d "${month_year}-01" +"%B %Y")  # Convert to text format
 else
     # Default to last 30 days
@@ -28,13 +28,13 @@ else
     report_date=$(date -d "30 days ago" +"%B %Y")
 fi
 
+# Initialize statistics variables
+connection_times=()
+block_times=()
+
 # Docusaurus Header
 echo "## RPC providers report for $report_date"
 echo ""
-
-# Print Markdown Table Header
-echo "| Endpoint                        | Zone         | Network            | Connect Latency (s) | Block Retrieval Latency (s) | Uptime (%) | Binary Version         |"
-echo "|---------------------------------|--------------|--------------------|---------------------|----------------------------|------------|------------------------|"
 
 # Function to fetch latency safely
 fetch_latency() {
@@ -53,6 +53,72 @@ fetch_latency() {
         echo "N/A"
     fi
 }
+
+# Function to calculate mean and standard deviation
+calculate_stats() {
+    local values=($@)
+    local sum=0
+    local count=${#values[@]}
+    local mean=0
+    local stddev=0
+
+    # Calculate mean
+    for val in "${values[@]}"; do
+        sum=$(echo "$sum + $val" | bc -l)
+    done
+    mean=$(echo "$sum / $count" | bc -l)
+
+    # Calculate standard deviation
+    sum=0
+    for val in "${values[@]}"; do
+        diff=$(echo "$val - $mean" | bc -l)
+        sum=$(echo "$sum + ($diff * $diff)" | bc -l)
+    done
+    stddev=$(echo "sqrt($sum / $count)" | bc -l)
+
+    printf "%.2f %.2f" "$mean" "$stddev"
+}
+
+# Iterate through each RPC endpoint in the config
+for endpoint in "${!rpcs[@]}"; do
+    entry=${rpcs[$endpoint]}
+    network=$(echo "$entry" | cut -d, -f1)
+    zone=$(echo "$entry" | cut -d, -f2)
+
+    # Fetch metrics
+    connect_latency=$(fetch_latency "rpc_connect" "$endpoint" "$network" "$zone")
+    block_latency=$(fetch_latency "rpc_getblockzero" "$endpoint" "$network" "$zone")
+
+    # Store valid values for statistics
+    if [[ $connect_latency != "N/A" ]]; then
+        connection_times+=($connect_latency)
+    fi
+    if [[ $block_latency != "N/A" ]]; then
+        block_times+=($block_latency)
+    fi
+
+done
+
+# Calculate and print general statistics
+connection_stats=$(calculate_stats "${connection_times[@]}")
+block_stats=$(calculate_stats "${block_times[@]}")
+
+mean_connect=$(echo "$connection_stats" | awk '{print $1}')
+stddev_connect=$(echo "$connection_stats" | awk '{print $2}')
+mean_block=$(echo "$block_stats" | awk '{print $1}')
+stddev_block=$(echo "$block_stats" | awk '{print $2}')
+
+echo "### Statistics"
+echo ""
+echo "- **Connect Time**: Monthly average time to connect to the websocket endpoint (Mean = $mean_connect s, Std Dev = $stddev_connect s)."
+echo "- **Block Retrieval Time**: Monthly average time to retrieve a block from the rpc server (Mean = $mean_block s, Std Dev = $stddev_block s)."
+echo "- **Uptime**: Monthly uptime percentage were the node was reachable without errors."
+echo "- **Binary Version**: The binary version running at the end of the month."
+echo ""
+
+# Print Markdown Table Header
+echo "| Endpoint                        | Zone         | Network            | Average Connect Time (s) | Average Block Retrieval Time (s) | Uptime (%) | Binary Version         |"
+echo "|---------------------------------|--------------|--------------------|--------------------------|----------------------------------|------------|------------------------|"
 
 # Function to fetch uptime using a 30-day range
 fetch_uptime() {
@@ -92,7 +158,7 @@ fetch_version() {
     fi
 }
 
-# Iterate through each RPC endpoint in the config
+# Print the detailed endpoint data
 for endpoint in "${!rpcs[@]}"; do
     entry=${rpcs[$endpoint]}
     network=$(echo "$entry" | cut -d, -f1)
