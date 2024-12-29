@@ -25,15 +25,15 @@ else
     # Default to last 30 days
     start_time=$(date -d "30 days ago" +%s)
     end_time=$(date +%s)
-    report_date=$(date -d "30 days ago" +"%B %Y")
+    report_date="last 30 days"
 fi
 
 # Initialize statistics variables
 connection_times=()
 block_times=()
 
-# Docusaurus Header
-echo "## RPC providers report for $report_date"
+# MDX Header
+echo "## RPC providers report for $report_date (`date -d @$start_time` - `date -d @$end_time`)"
 echo ""
 
 # Function to fetch latency safely
@@ -111,7 +111,7 @@ stddev_block=$(echo "$block_stats" | awk '{print $2}')
 echo ""
 echo "- **Connect Time**: Monthly average time to connect to the websocket endpoint (Mean = $mean_connect s, Std Dev = $stddev_connect s)."
 echo "- **Block Retrieval Time**: Monthly average time to retrieve a block from the rpc server (Mean = $mean_block s, Std Dev = $stddev_block s)."
-echo "- **Uptime**: Monthly uptime percentage were the node was reachable without errors."
+echo "- **Uptime**: Monthly uptime percentage were the node was able to retrieve a block without error."
 echo "- **Binary Version**: The binary version running at the end of the month."
 echo ""
 
@@ -125,7 +125,7 @@ fetch_uptime() {
     local network=$2
     local zone=$3
     result=$(curl -s -G "$PROMETHEUS_SERVER/api/v1/query" \
-        --data-urlencode "query=(1 - (sum(sum_over_time(rpc_error{wss=\"$endpoint\",zone=\"$zone\",network=\"$network\",error=\"blockzero\"}[30d]))) / (30 * 24 * 4)) * 100" \
+        --data-urlencode "query=(1 - (sum_over_time(rpc_error{wss=\"$endpoint\",zone=\"$zone\",network=\"$network\",error=\"blockzero\"}[30d])) / (30 * 24 * 4)) * 100" \
         --data-urlencode "time=$end_time")
 
     if echo "$result" | jq -e '.data.result | length > 0' >/dev/null; then
