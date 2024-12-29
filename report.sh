@@ -28,15 +28,11 @@ else
     report_date="last 30 days"
 fi
 
-# Initialize statistics variables
-connection_times=()
-block_times=()
-
 # MDX Header
 echo "## RPC providers report for $report_date (`date -d @$start_time` - `date -d @$end_time`)"
 echo ""
 
-# Function to fetch latency safely
+# Function to fetch latency safely (for per-endpoint stats)
 fetch_latency() {
     local metric=$1
     local endpoint=$2
@@ -54,61 +50,45 @@ fetch_latency() {
     fi
 }
 
-# Function to calculate mean and standard deviation
-calculate_stats() {
-    local values=($@)
-    local sum=0
-    local count=${#values[@]}
-    local mean=0
-    local stddev=0
+fetch_global_stat() {
+    local metric=$1
+    local operation=$2
 
-    # Calculate mean
-    for val in "${values[@]}"; do
-        sum=$(echo "$sum + $val" | bc -l)
-    done
-    mean=$(echo "$sum / $count" | bc -l)
+    # Decide which Prometheus function to call
+    if [[ "$operation" == "avg" ]]; then
+        query="avg(avg_over_time(${metric}[30d]))"
+    elif [[ "$operation" == "stddev" ]]; then
+        query="avg(stddev_over_time(${metric}[30d]))"
+    fi
 
-    # Calculate standard deviation
-    sum=0
-    for val in "${values[@]}"; do
-        diff=$(echo "$val - $mean" | bc -l)
-        sum=$(echo "$sum + ($diff * $diff)" | bc -l)
-    done
-    stddev=$(echo "sqrt($sum / $count)" | bc -l)
+    result=$(curl -s -G "$PROMETHEUS_SERVER/api/v1/query" \
+        --data-urlencode "query=$query" \
+        --data-urlencode "time=$end_time")
 
-    printf "%.2f %.2f" "$mean" "$stddev"
+    if echo "$result" | jq -e '.data.result | length > 0' >/dev/null; then
+        value=$(echo "$result" | jq -r '.data.result[0].value[1]')
+        printf "%.2f" "$value"
+    else
+        echo "N/A"
+    fi
 }
 
-# Iterate through each RPC endpoint in the config
+# Iterate through each RPC endpoint in the config (per-endpoint queries)
 for endpoint in "${!rpcs[@]}"; do
     entry=${rpcs[$endpoint]}
     network=$(echo "$entry" | cut -d, -f1)
     zone=$(echo "$entry" | cut -d, -f2)
 
-    # Fetch metrics
+    # Fetch metrics for each endpoint
     connect_latency=$(fetch_latency "rpc_connect" "$endpoint" "$network" "$zone")
     block_latency=$(fetch_latency "rpc_getblockzero" "$endpoint" "$network" "$zone")
-
-    # Store valid values for statistics
-    if [[ $connect_latency != "N/A" ]]; then
-        connection_times+=($connect_latency)
-    fi
-    if [[ $block_latency != "N/A" ]]; then
-        block_times+=($block_latency)
-    fi
-
 done
 
-# Calculate and print general statistics
-connection_stats=$(calculate_stats "${connection_times[@]}")
-block_stats=$(calculate_stats "${block_times[@]}")
+mean_connect=$(fetch_global_stat "rpc_connect" "avg")
+stddev_connect=$(fetch_global_stat "rpc_connect" "stddev")
+mean_block=$(fetch_global_stat "rpc_getblockzero" "avg")
+stddev_block=$(fetch_global_stat "rpc_getblockzero" "stddev")
 
-mean_connect=$(echo "$connection_stats" | awk '{print $1}')
-stddev_connect=$(echo "$connection_stats" | awk '{print $2}')
-mean_block=$(echo "$block_stats" | awk '{print $1}')
-stddev_block=$(echo "$block_stats" | awk '{print $2}')
-
-echo ""
 echo "- **Connect Time**: Monthly average time to connect to the websocket endpoint (Mean = $mean_connect s, Std Dev = $stddev_connect s)."
 echo "- **Block Retrieval Time**: Monthly average time to retrieve a block from the rpc server (Mean = $mean_block s, Std Dev = $stddev_block s)."
 echo "- **Uptime**: Monthly uptime percentage were the node was able to retrieve a block without error."
@@ -163,7 +143,7 @@ for endpoint in "${!rpcs[@]}"; do
     network=$(echo "$entry" | cut -d, -f1)
     zone=$(echo "$entry" | cut -d, -f2)
 
-    # Fetch metrics
+    # Fetch metrics (per-endpoint)
     connect_latency=$(fetch_latency "rpc_connect" "$endpoint" "$network" "$zone")
     block_latency=$(fetch_latency "rpc_getblockzero" "$endpoint" "$network" "$zone")
     uptime=$(fetch_uptime "$endpoint" "$network" "$zone")
