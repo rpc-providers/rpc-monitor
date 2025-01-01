@@ -122,7 +122,7 @@ fetch_version() {
     local network=$2
     local zone=$3
     result=$(curl -s -G "$PROMETHEUS_SERVER/api/v1/query" \
-        --data-urlencode "query=last_over_time(rpc_version{wss=\"$endpoint\",zone=\"$zone\",network=\"$network\"}[1h])" \
+        --data-urlencode "query=last_over_time(rpc_version{wss=\"$endpoint\",zone=\"$zone\",network=\"$network\"}[20m])" \
         --data-urlencode "time=$end_time")
 
     if echo "$result" | jq -e '.data.result | length > 0' >/dev/null; then
