@@ -44,3 +44,21 @@ When an alert is triggered an alert is send to this telegram group:
 * https://t.me/+8TP1EWkPyAA1Njc0
 
 Alerting parameters will be further defined when more monitoring data is available.
+
+## Quick install
+
+```bash
+# Install nvm & yarn
+wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
+nvm install --lts
+npm install -g yarn
+# Clone the repo
+cd /opt/
+git clone git@github.com:rpc-providers/rpc-monitor.git
+# Setup config 
+cp zone.sh.example zone.sh
+# Install api cli
+yarn global add @polkadot/api-cli
+# add crontab
+echo "*/15 *   * * *   root    /opt/rpc-monitor/monitor.sh" | sudo tee -a /etc/crontab
+```
