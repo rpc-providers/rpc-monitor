@@ -55,6 +55,8 @@ npm install -g yarn
 # Clone the repo
 cd /opt/
 git clone git@github.com:rpc-providers/rpc-monitor.git
+# Create the output dir
+mkdir -p /var/www/prom
 # Setup config 
 cp zone.sh.example zone.sh
 # Install api cli
