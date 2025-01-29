@@ -17,6 +17,8 @@ rpcs[wss://rpc.dotters.network/polkadot]="polkadot,eu-central"
 rpcs[wss://rpc.dotters.network/kusama]="kusama,eu-central"
 rpcs[wss://dot-rpc.stakeworld.io]="polkadot,eu-central"
 rpcs[wss://dot-rpc.stakeworld.io/assethub]="polkadot-assethub,eu-central"
+rpcs[wss://rpc-kusama.helixstreet.io]="kusama,eu-central"
+rpcs[wss://rpc-polkadot.helixstreet.io]="polkadot,eu-central"
 
 # Zone-specific entries for `us-east`
 rpcs[wss://rpc-kusama.luckyfriday.io]="kusama,us-east"
