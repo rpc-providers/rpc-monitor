@@ -58,7 +58,7 @@ for rpc in "${!filtered_rpcs[@]}"; do
     "westend") zerohash="0xe143f23803ac50e8f6f8e62695d1ce9e4e1d68aa36c1cd2cfd15340213f3423e" ;;
     *) zerohash="" ;;
   esac
-  time=$(timeout 120s /usr/bin/time -f "%e" polkadot-js-api --ws "$rpc" rpc.chain.getBlock $zerohash 2>&1 | tail -n1)
+  time=$(timeout 30s /usr/bin/time -f "%e" polkadot-js-api --ws "$rpc" rpc.chain.getBlock $zerohash 2>&1 | tail -n1)
   if [ $? -eq 0 ]; then
     if [[ $time =~ ^[+-]?[0-9]+([.][0-9]+)?$ ]]; then
       echo "rpc_getblockzero{wss=\"$rpc\",network=\"$network\",zone=\"$zone\"} $time $timestamp" >> $prom
@@ -81,7 +81,7 @@ echo "# TYPE rpc_connect gauge" >> $prom
 for rpc in "${!filtered_rpcs[@]}"; do
   network=${filtered_rpcs[$rpc]}
   rpcdomain=$(echo $rpc | cut -d\/ -f3,4)
-  time=$(/usr/bin/timeout --foreground 120s /usr/bin/time -f "%e" /usr/local/bin/websocat -uU $rpc 2>&1)
+  time=$(/usr/bin/timeout --foreground 10s /usr/bin/time -f "%e" /usr/local/bin/websocat -uU $rpc 2>&1)
   if [ $? -eq 0 ]; then
     code=$(curl -LI "https://$rpcdomain" -o /dev/null -w '%{http_code}\n' -s)
     if [ $? -ne 0 ]; then code="1"; fi
@@ -104,7 +104,7 @@ echo "# TYPE rpc_version gauge" >> $prom
 
 for rpc in "${!filtered_rpcs[@]}"; do
   network=${filtered_rpcs[$rpc]}
-  version=$(timeout 120s polkadot-js-api --ws "$rpc" rpc.system.version 2>&1 | grep version | cut -d\" -f4)
+  version=$(timeout 20s polkadot-js-api --ws "$rpc" rpc.system.version 2>&1 | grep version | cut -d\" -f4)
   if [ -z "$version" ]; then
     echo "rpc_error{wss=\"$rpc\",network=\"$network\",zone=\"$zone\",error=\"version\"} 1 $timestamp" >> $errorprom
     echo "`date`: $rpc error: version=$version" >> $error
