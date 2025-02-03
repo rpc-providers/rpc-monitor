@@ -41,3 +41,10 @@ rpcs[wss://statemine.public.curie.radiumblock.co/ws]="kusama-assethub,us-east"
 # Temporary for debugging
 rpcs[wss://bridgehub-kusama.public.curie.radiumblock.co/ws]="kusama-bridgehub,us-east"
 rpcs[wss://collectives.public.curie.radiumblock.co/ws]="polkadot-collectives,us-east"
+# Stakeworld ksm + ksm-asset + ksm-bridge
+rpcs[wss://ksm-rpc.stakeworld.io]="kusama,eu-central"
+rpcs[wss://ksm-rpc.stakeworld.io/assethub]="kusama-assethub,eu-central"
+rpcs[wss://ksm-rpc.stakeworld.io/bridgehub]="kusama-bridgehub,eu-central"
+# Dwellir westend
+rpcs[wss://westend-rpc.dwellir.com]="westend,eu-central"
+
