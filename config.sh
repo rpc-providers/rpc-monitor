@@ -38,9 +38,6 @@ rpcs[wss://kusama.api.onfinality.io/public-ws]="kusama,us-east"
 # Radiumblock ksm + ksm-asset
 rpcs[wss://kusama.public.curie.radiumblock.co/ws]="kusama,us-east"
 rpcs[wss://statemine.public.curie.radiumblock.co/ws]="kusama-assethub,us-east"
-# Temporary for debugging
-rpcs[wss://bridgehub-kusama.public.curie.radiumblock.co/ws]="kusama-bridgehub,us-east"
-rpcs[wss://collectives.public.curie.radiumblock.co/ws]="polkadot-collectives,us-east"
 # Stakeworld ksm + ksm-asset + ksm-bridge
 rpcs[wss://ksm-rpc.stakeworld.io]="kusama,eu-central"
 rpcs[wss://ksm-rpc.stakeworld.io/assethub]="kusama-assethub,eu-central"
