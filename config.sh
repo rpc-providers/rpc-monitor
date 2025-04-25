@@ -46,4 +46,8 @@ rpcs[wss://ksm-rpc.stakeworld.io/assethub]="kusama-assethub,eu-central"
 rpcs[wss://ksm-rpc.stakeworld.io/bridgehub]="kusama-bridgehub,eu-central"
 # Dwellir westend
 rpcs[wss://westend-rpc.dwellir.com]="westend,eu-central"
-
+# Dwellir ksm-cor + ksm-peo + dot-cor + dot-peo
+rpcs[wss://coretime-kusama-rpc.n.dwellir.com]="kusama-coretime,eu-central"
+rpcs[wss://people-kusama-rpc.n.dwellir.com]="kusama-people,eu-central"
+rpcs[wss://coretime-polkadot-rpc.n.dwellir.com]="polkadot-coretime,eu-central"
+rpcs[wss://people-polkadot-rpc.n.dwellir.com]="polkadot-people,eu-central"
