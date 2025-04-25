@@ -21,11 +21,13 @@ rpcs[wss://polkadot.api.onfinality.io/public-ws]="polkadot,us-east"
 rpcs[wss://polkadot.public.curie.radiumblock.co/ws]="polkadot,us-east"
 rpcs[wss://statemint.public.curie.radiumblock.co/ws]="polkadot-assethub,us-east"
 rpcs[wss://bridgehub-polkadot.public.curie.radiumblock.co/ws]="polkadot-bridgehub,us-east"
-# Stakeworld dot + dot-asset + dot-bridge + dot-col
+# Stakeworld dot + dot-asset + dot-bridge + dot-col + dot-cor + dot-peo
 rpcs[wss://dot-rpc.stakeworld.io]="polkadot,eu-central"
 rpcs[wss://dot-rpc.stakeworld.io/assethub]="polkadot-assethub,eu-central"
 rpcs[wss://dot-rpc.stakeworld.io/bridgehub]="polkadot-bridgehub,eu-central"
 rpcs[wss://dot-rpc.stakeworld.io/collectives]="polkadot-collectives,eu-central"
+rpcs[wss://dot-rpc.stakeworld.io/coretime]="polkadot-coretime,eu-central"
+rpcs[wss://dot-rpc.stakeworld.io/people]="polkadot-people,eu-central"
 # Dwellir ksm-bridge + ksm-encointer 
 rpcs[wss://bridge-hub-kusama-rpc.dwellir.com]="kusama-bridgehub,eu-central"
 rpcs[wss://encointer-kusama-rpc.dwellir.com]="kusama-encointer,eu-central"
