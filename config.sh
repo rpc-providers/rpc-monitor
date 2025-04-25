@@ -10,7 +10,7 @@ rpcs[wss://polkadot-assethub-rpc.blockops.network/ws]="polkadot-assethub,eu-cent
 rpcs[wss://polkadot-rpc.dwellir.com]="polkadot,eu-central"
 rpcs[wss://asset-hub-polkadot-rpc.dwellir.com]="polkadot-assethub,eu-central"
 rpcs[wss://bridge-hub-polkadot-rpc.dwellir.com]="polkadot-bridgehub,eu-central"
-rpcs[wss://collectives-polkadot-rpc.dwellir.com]="polkadot-collectives,eu-central"
+rpcs[wss://collectives-polkadot-rpc.n.dwellir.com]="polkadot-collectives,eu-central"
 # Helixstreet dot
 rpcs[wss://rpc-polkadot.helixstreet.io]="polkadot,eu-central"
 # Luckyfriday dot
@@ -30,7 +30,7 @@ rpcs[wss://dot-rpc.stakeworld.io/coretime]="polkadot-coretime,eu-central"
 rpcs[wss://dot-rpc.stakeworld.io/people]="polkadot-people,eu-central"
 # Dwellir ksm-bridge + ksm-encointer 
 rpcs[wss://bridge-hub-kusama-rpc.dwellir.com]="kusama-bridgehub,eu-central"
-rpcs[wss://encointer-kusama-rpc.dwellir.com]="kusama-encointer,eu-central"
+rpcs[wss://encointer-kusama-rpc.n.dwellir.com]="kusama-encointer,eu-central"
 # Helixstreet ksm
 rpcs[wss://rpc-kusama.helixstreet.io]="kusama,eu-central"
 # Luckyfriday ksm
