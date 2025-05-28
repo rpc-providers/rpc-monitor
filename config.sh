@@ -7,10 +7,10 @@ declare -A rpcs
 rpcs[wss://polkadot-public-rpc.blockops.network/ws]="polkadot,eu-central"
 rpcs[wss://polkadot-assethub-rpc.blockops.network/ws]="polkadot-assethub,eu-central"
 # Dwellir dot + dot-asset + dot-bridge + dot-col + dot-cor + dot-peo
-rpcs[wss://polkadot-rpc.dwellir.com]="polkadot,eu-central"
-rpcs[wss://asset-hub-polkadot-rpc.dwellir.com]="polkadot-assethub,eu-central"
-rpcs[wss://bridge-hub-polkadot-rpc.dwellir.com]="polkadot-bridgehub,eu-central"
-rpcs[wss://collectives-polkadot-rpc.dwellir.com]="polkadot-collectives,eu-central"
+rpcs[wss://polkadot-rpc.n.dwellir.com]="polkadot,eu-central"
+rpcs[wss://asset-hub-polkadot-rpc.n.dwellir.com]="polkadot-assethub,eu-central"
+rpcs[wss://bridge-hub-polkadot-rpc.n.dwellir.com]="polkadot-bridgehub,eu-central"
+rpcs[wss://collectives-polkadot-rpc.n.dwellir.com]="polkadot-collectives,eu-central"
 rpcs[wss://coretime-polkadot-rpc.n.dwellir.com]="polkadot-coretime,eu-central"
 rpcs[wss://people-polkadot-rpc.n.dwellir.com]="polkadot-people,eu-central"
 # Helixstreet dot
@@ -31,8 +31,8 @@ rpcs[wss://dot-rpc.stakeworld.io/collectives]="polkadot-collectives,eu-central"
 rpcs[wss://dot-rpc.stakeworld.io/coretime]="polkadot-coretime,eu-central"
 rpcs[wss://dot-rpc.stakeworld.io/people]="polkadot-people,eu-central"
 # Dwellir ksm-bridge + ksm-encointer + ksm-cor + ksm-peo
-rpcs[wss://bridge-hub-kusama-rpc.dwellir.com]="kusama-bridgehub,eu-central"
-rpcs[wss://encointer-kusama-rpc.dwellir.com]="kusama-encointer,eu-central"
+rpcs[wss://bridge-hub-kusama-rpc.n.dwellir.com]="kusama-bridgehub,eu-central"
+rpcs[wss://encointer-kusama-rpc.n.dwellir.com]="kusama-encointer,eu-central"
 rpcs[wss://coretime-kusama-rpc.n.dwellir.com]="kusama-coretime,eu-central"
 rpcs[wss://people-kusama-rpc.n.dwellir.com]="kusama-people,eu-central"
 # Helixstreet ksm
@@ -49,5 +49,5 @@ rpcs[wss://ksm-rpc.stakeworld.io]="kusama,eu-central"
 rpcs[wss://ksm-rpc.stakeworld.io/assethub]="kusama-assethub,eu-central"
 rpcs[wss://ksm-rpc.stakeworld.io/bridgehub]="kusama-bridgehub,eu-central"
 # Dwellir westend
-rpcs[wss://westend-rpc.dwellir.com]="westend,eu-central"
+rpcs[wss://westend-rpc.n.dwellir.com]="westend,eu-central"
 
