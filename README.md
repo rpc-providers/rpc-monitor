@@ -10,10 +10,9 @@ You can choose between networks, monitoring zones and providers in the dashboard
 * [All polkadot endpoints from zone eu-central](https://monitor.rpc-providers.net/d/bdkaq43z8xybka/rpc-providers?orgId=1&var-zone=eu-central&var-network=polkadot&var-wss=All)
 
 ## Monitoring endpoints
-There are multipele prometheus monitoring endpoints active:
+There are two prometheus monitoring endpoints active:
 * [http://mon-us-east.rpc-providers.net/](http://mon-us-east.rpc-providers.net/) (Virginia)
 * [http://mon-eu-central.rpc-providers.net/](http://mon-eu-central.rpc-providers.net/) (Frankfurt)
-* [http://mon-ap-southeast.rpc-providers.net/](http://mon-ap-southeast.rpc-providers.net/) (Singapore) 
 
 At this moment the data is updated every 15 minutes. 
 
@@ -33,7 +32,6 @@ scrape_configs:
     static_configs:
       - targets: ["mon-eu-central.rpc-providers.net:80"]
       - targets: ["mon-us-east.rpc-providers.net:80"]
-      - targets: ["mon-ap-southeast.rpc-providers.net:80"]
 ```
 
 ## WSS Endpoint configuration
