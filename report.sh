@@ -8,7 +8,6 @@ if [[ ! -f "$config_file" ]]; then
 fi
 source "$config_file"
 
-# Prometheus server address
 PROMETHEUS_SERVER="http://localhost:9090"
 
 # Handle optional month input
@@ -20,19 +19,31 @@ if [[ -n $1 ]]; then
     fi
     start_time=$(date -d "${month_year}-01" +%s)
     end_time=$(date -d "${month_year}-01 +1 month -1 second" +%s)
-    report_date=$(date -d "${month_year}-01" +"%B %Y")  # Convert to text format
+    report_date=$(date -d "${month_year}-01" +"%B %Y")
 else
-    # Default to last 30 days
     start_time=$(date -d "30 days ago" +%s)
     end_time=$(date +%s)
     report_date="last 30 days"
 fi
 
-# MDX Header
-echo "## RPC providers report for $report_date (`date -d @$start_time` - `date -d @$end_time`)"
-echo ""
+# Mapping van network naar chain label in Prometheus
+declare -A network_to_chain=(
+  [polkadot-coretime]="coretime-polkadot"
+  [kusama-coretime]="coretime-kusama"
+  [polkadot-bridgehub]="bridge-hub-polkadot"
+  [kusama-bridgehub]="bridge-hub-kusama"
+  [polkadot-assethub]="asset-hub-polkadot"
+  [kusama-assethub]="asset-hub-kusama"
+  [polkadot-collectives]="collectives_polkadot"
+  [kusama-encointer]="encointer-kusama"
+  [polkadot-people]="people-polkadot"
+  [kusama-people]="people-kusama"
+  [westend]="westend2"
+  [polkadot]="polkadot"
+  [kusama]="ksmcc3"
+)
 
-# Function to fetch latency safely (for per-endpoint stats)
+# Functions
 fetch_latency() {
     local metric=$1
     local endpoint=$2
@@ -54,7 +65,6 @@ fetch_global_stat() {
     local metric=$1
     local operation=$2
 
-    # Decide which Prometheus function to call
     if [[ "$operation" == "avg" ]]; then
         query="avg(avg_over_time(${metric}[30d]))"
     elif [[ "$operation" == "stddev" ]]; then
@@ -73,33 +83,6 @@ fetch_global_stat() {
     fi
 }
 
-# Iterate through each RPC endpoint in the config (per-endpoint queries)
-for endpoint in "${!rpcs[@]}"; do
-    entry=${rpcs[$endpoint]}
-    network=$(echo "$entry" | cut -d, -f1)
-    zone=$(echo "$entry" | cut -d, -f2)
-
-    # Fetch metrics for each endpoint
-    connect_latency=$(fetch_latency "rpc_connect" "$endpoint" "$network" "$zone")
-    block_latency=$(fetch_latency "rpc_getblockzero" "$endpoint" "$network" "$zone")
-done
-
-mean_connect=$(fetch_global_stat "rpc_connect" "avg")
-stddev_connect=$(fetch_global_stat "rpc_connect" "stddev")
-mean_block=$(fetch_global_stat "rpc_getblockzero" "avg")
-stddev_block=$(fetch_global_stat "rpc_getblockzero" "stddev")
-
-echo "- **Connect Time**: Monthly average time to connect to the websocket endpoint (Mean = $mean_connect s, Std Dev = $stddev_connect s)."
-echo "- **Block Retrieval Time**: Monthly average time to retrieve a block from the rpc server (Mean = $mean_block s, Std Dev = $stddev_block s)."
-echo "- **Uptime**: Monthly uptime percentage were the node was able to retrieve a block without error."
-echo "- **Binary Version**: The binary version running at the end of the month."
-echo ""
-
-# Print Markdown Table Header
-echo "| Endpoint                        | Zone         | Network            | Average Connect Time (s) | Average Block Retrieval Time (s) | Uptime (%) | Binary Version         |"
-echo "|---------------------------------|--------------|--------------------|--------------------------|----------------------------------|------------|------------------------|"
-
-# Function to fetch uptime using a 30-day range
 fetch_uptime() {
     local endpoint=$1
     local network=$2
@@ -116,7 +99,6 @@ fetch_uptime() {
     fi
 }
 
-# Function to fetch binary version and check format
 fetch_version() {
     local endpoint=$1
     local network=$2
@@ -128,7 +110,7 @@ fetch_version() {
     if echo "$result" | jq -e '.data.result | length > 0' >/dev/null; then
         version=$(echo "$result" | jq -r '.data.result[-1].metric.version // "N/A"')
         if [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+-[a-f0-9]+$ ]]; then
-            echo "${version%%-*}"  # Extract the part before the `-`
+            echo "${version%%-*}"
         else
             echo "Invalid"
         fi
@@ -137,20 +119,65 @@ fetch_version() {
     fi
 }
 
-# Print the detailed endpoint data
-for endpoint in "${!rpcs[@]}"; do
+fetch_rpc_calls() {
+    local chain=$1
+    local job=$2
+    result=$(curl -s -G "$PROMETHEUS_SERVER/api/v1/query" \
+        --data-urlencode "query=sum(increase(substrate_rpc_calls_started{chain=\"$chain\",job=\"$job\"}[30d]))" \
+        --data-urlencode "time=$end_time")
+
+    value=$(echo "$result" | jq -r '.data.result[0].value[1]')
+    if [ "$value" != "null" ]; then
+        printf "%.1f" "$(echo "$value / 1000000" | bc -l)"
+    else
+        echo "N/A"
+    fi
+}
+
+# Report Header
+echo "## RPC providers report for $report_date (`date -d @$start_time` - `date -d @$end_time`)"
+echo ""
+mean_connect=$(fetch_global_stat "rpc_connect" "avg")
+stddev_connect=$(fetch_global_stat "rpc_connect" "stddev")
+mean_block=$(fetch_global_stat "rpc_getblockzero" "avg")
+stddev_block=$(fetch_global_stat "rpc_getblockzero" "stddev")
+echo "- **Connect Time**: Avg = $mean_connect s (Std Dev = $stddev_connect s)"
+echo "- **Block Retrieval Time**: Avg = $mean_block s (Std Dev = $stddev_block s)"
+echo "- **Uptime**: % of time endpoint could fetch block"
+echo "- **Binary Version**: Node version at end of period"
+echo "- **RPC Calls**: RPC calls in the last 30 days in millions"
+echo ""
+
+# Table Header
+echo "| Endpoint                        | Zone         | Network            | Average Connect Time (s) | Average Block Retrieval Time (s) | Uptime (%) | Binary Version         | RPC Calls (M) |"
+echo "|---------------------------------|--------------|--------------------|--------------------------|----------------------------------|------------|------------------------|----------------------|"
+
+# Create a temporary list of sorted endpoints based on their associated network
+sorted_endpoints=$(for endpoint in "${!rpcs[@]}"; do
+    network=$(echo "${rpcs[$endpoint]}" | cut -d, -f1)
+    echo "$network|$endpoint"
+done | sort | cut -d'|' -f2)
+
+# Data Rows
+for endpoint in $sorted_endpoints; do
     entry=${rpcs[$endpoint]}
     network=$(echo "$entry" | cut -d, -f1)
     zone=$(echo "$entry" | cut -d, -f2)
+    job=$(echo "$entry" | cut -d, -f3)
+    chain=${network_to_chain[$network]}
 
-    # Fetch metrics (per-endpoint)
     connect_latency=$(fetch_latency "rpc_connect" "$endpoint" "$network" "$zone")
     block_latency=$(fetch_latency "rpc_getblockzero" "$endpoint" "$network" "$zone")
     uptime=$(fetch_uptime "$endpoint" "$network" "$zone")
     binary_version=$(fetch_version "$endpoint" "$network" "$zone")
+    if [ -n "$chain" ] && [ -n "$job" ]; then
+        rpc_calls=$(fetch_rpc_calls "$chain" "$job")
+    else
+        rpc_calls="N/A"
+    fi
 
-    # Print results
-    printf "| %-31s | %-12s | %-18s | %-19s | %-26s | %-10s | %-22s |\n" \
-        "$endpoint" "$zone" "$network" "$connect_latency" "$block_latency" "$uptime" "$binary_version"
+    printf "| %-33s | %-12s | %-20s | %-24s | %-32s | %-10s | %-22s | %-22s |
+" \
+        "$endpoint" "$zone" "$network" "$connect_latency" "$block_latency" "$uptime" "$binary_version" "$rpc_calls"
 done
 
