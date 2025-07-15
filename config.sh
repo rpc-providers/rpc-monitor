@@ -6,6 +6,8 @@ declare -A rpcs
 # Blockops dot + dot-asset
 rpcs[wss://polkadot-public-rpc.blockops.network/ws]="polkadot,eu-central,blockops"
 rpcs[wss://polkadot-assethub-rpc.blockops.network/ws]="polkadot-assethub,eu-central,blockops"
+# Deigenvektor dot
+rpcs[wss://polkadot-rpc.deigenvektor.io]="polkadot,eu-central,Deigenvektor"
 # Dwellir dot + dot-asset + dot-bridge + dot-col + dot-cor + dot-peo
 rpcs[wss://polkadot-rpc.n.dwellir.com]="polkadot,eu-central,Dwellir"
 rpcs[wss://asset-hub-polkadot-rpc.n.dwellir.com]="polkadot-assethub,eu-central,Dwellir"
@@ -30,6 +32,8 @@ rpcs[wss://dot-rpc.stakeworld.io/bridgehub]="polkadot-bridgehub,eu-central,stake
 rpcs[wss://dot-rpc.stakeworld.io/collectives]="polkadot-collectives,eu-central,stakeworld"
 rpcs[wss://dot-rpc.stakeworld.io/coretime]="polkadot-coretime,eu-central,stakeworld"
 rpcs[wss://dot-rpc.stakeworld.io/people]="polkadot-people,eu-central,stakeworld"
+# Deigenvektor ksm
+rpcs[wss://kusama-rpc.deigenvektor.io]="kusama,eu-central,Deigenvektor"
 # Dwellir ksm-bridge + ksm-encointer + ksm-cor + ksm-peo
 rpcs[wss://bridge-hub-kusama-rpc.n.dwellir.com]="kusama-bridgehub,eu-central,Dwellir"
 rpcs[wss://encointer-kusama-rpc.n.dwellir.com]="kusama-encointer,eu-central,Dwellir"
