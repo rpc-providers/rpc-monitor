@@ -7,6 +7,7 @@ prom="$output/index.txt.new"
 errorprom="$output/error.txt.new"
 promdest="$output/index.txt"
 error="error.log"
+export NODE_EXTRA_CA_CERTS=/etc/ssl/certs/ca-certificates.crt
 
 # Load environment and configurations
 source /root/.nvm/nvm.sh
