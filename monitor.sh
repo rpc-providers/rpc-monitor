@@ -23,6 +23,9 @@ git pull > /dev/null
 pids=$(pgrep monitor | wc -l)
 if [ $pids -ne "2" ]; then
   echo "Already running, abort"
+  echo "--------------
+  ps aux
+  echo "--------------
   exit
 fi
 
