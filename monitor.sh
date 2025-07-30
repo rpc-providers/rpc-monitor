@@ -52,7 +52,7 @@ for rpc in "${!filtered_rpcs[@]}"; do
   network=${filtered_rpcs[$rpc]}
   case $network in
     "polkadot") zerohash="0x91b171bb158e2d3848fa23a9f1c25182fb8e20313b2c1eb49219da7a70ce90c3" ;;
-    "polkadot-assethub") zerohash="0x48239ef607d7928874027a43a67689209727dfb3d3dc5e5b03a39bdc2eda771a" ;;
+    "polkadot-assethub") zerohash="0x68d56f15f85d3136970ec16946040bc1752654e906147f7e43e9d539d7c3de2f" ;;
     "polkadot-collectives") zerohash="0x46ee89aa2eedd13e988962630ec9fb7565964cf5023bb351f2b6b25c1b68b0b2" ;;
     "polkadot-bridgehub") zerohash="0xdcf691b5a3fbe24adc99ddc959c0561b973e329b1aef4c4b22e7bb2ddecb4464" ;;
     "kusama") zerohash="0xb0a8d493285c2df73290dfb7e61f870f17b41801197a149ca93654499ea3dafe" ;;
