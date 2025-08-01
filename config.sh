@@ -43,8 +43,8 @@ rpcs[wss://rpc-kusama.helixstreet.io]="kusama,eu-central,Helixstreet"
 # Luckyfriday
 rpcs[wss://rpc-kusama.luckyfriday.io]="kusama,us-east,GlobalStake"
 # Onfinality
-rpcs[wss://assethub-kusama.api.onfinality.io/public-ws]="kusama-assethub,us-east,onfinality"
-rpcs[wss://bridgehub-kusama.api.onfinality.io/public-ws]="kusama-bridgehub,us-east,onfinality"
+rpcs[wss://assethub-kusama.api.onfinality.io/public-ws]="kusama-assethub,ap-southeast,onfinality"
+rpcs[wss://bridgehub-kusama.api.onfinality.io/public-ws]="kusama-bridgehub,ap-southeast,onfinality"
 # Radiumblock
 rpcs[wss://statemine.public.curie.radiumblock.co/ws]="kusama-assethub,us-east,RadiumBlock"
 rpcs[wss://bridgehub-kusama.public.curie.radiumblock.co/ws]="kusama-bridgehub,us-east,RadiumBlock"
