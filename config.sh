@@ -19,14 +19,14 @@ rpcs[wss://rpc-asset-hub-polkadot.luckyfriday.io]="polkadot-assethub,us-east,Glo
 rpcs[wss://rpc-bridge-hub-polkadot.luckyfriday.io]="polkadot-bridgehub,us-east,GlobalStake"
 # Onfinality 
 rpcs[wss://polkadot.api.onfinality.io/public-ws]="polkadot,us-east,onfinality"
-rpcs[wss://statemint.api.onfinality.io/public-ws]="polkadot-assethub,us-east,onfinality"
+rpcs[wss://statemint.api.onfinality.io/public-ws]="polkadot-assethub,ap-southeast,onfinality"
 rpcs[wss://bridgehub-polkadot.api.onfinality.io/public-ws]="polkadot-bridgehub,ap-southeast,onfinality"
 rpcs[wss://collectives.api.onfinality.io/public-ws]="polkadot-collectives,ap-southeast,onfinality"
 rpcs[wss://coretime-polkadot.api.onfinality.io/public-ws]="polkadot-coretime,us-east,onfinality"
 # Radiumblock
 rpcs[wss://polkadot.public.curie.radiumblock.co/ws]="polkadot,us-east,RadiumBlock"
 # Simplystaking
-rpcs[wss://spectrum-01.simplystaking.xyz/cG9sa2Fkb3QtMDEtOTFkMmYwZGYtcG9sa2Fkb3Q/uj77qtNEPueW1w/polkadot/mainnet/]="polkadot,ap-southeast,simplystaking"
+rpcs[wss://spectrum-01.simplystaking.xyz/cG9sa2Fkb3QtMDEtOTFkMmYwZGYtcG9sa2Fkb3Q/uj77qtNEPueW1w/polkadot/mainnet/]="polkadot,us-east,simplystaking"
 # Stakeworld 
 rpcs[wss://dot-rpc.stakeworld.io]="polkadot,eu-central,stakeworld"
 rpcs[wss://dot-rpc.stakeworld.io/assethub]="polkadot-assethub,eu-central,stakeworld"
