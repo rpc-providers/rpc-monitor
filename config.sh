@@ -26,7 +26,7 @@ rpcs[wss://coretime-polkadot.api.onfinality.io/public-ws]="polkadot-coretime,us-
 # Radiumblock
 rpcs[wss://polkadot.public.curie.radiumblock.co/ws]="polkadot,us-east,RadiumBlock"
 # Simplystaking
-rpcs[wss://spectrum-01.simplystaking.xyz/cG9sa2Fkb3QtMDEtOTFkMmYwZGYtcG9sa2Fkb3Q/uj77qtNEPueW1w/polkadot/mainnet/]="polkadot,us-east,simplystaking"
+rpcs[wss://spectrum-01.simplystaking.xyz/cG9sa2Fkb3QtMDEtOTFkMmYwZGYtcG9sa2Fkb3Q/uj77qtNEPueW1w/polkadot/mainnet/]="polkadot,eu-central,simplystaking"
 # Stakeworld 
 rpcs[wss://dot-rpc.stakeworld.io]="polkadot,eu-central,stakeworld"
 rpcs[wss://dot-rpc.stakeworld.io/assethub]="polkadot-assethub,eu-central,stakeworld"
