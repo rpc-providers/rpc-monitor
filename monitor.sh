@@ -63,7 +63,7 @@ for rpc in "${!filtered_rpcs[@]}"; do
     "westend") zerohash="0xe143f23803ac50e8f6f8e62695d1ce9e4e1d68aa36c1cd2cfd15340213f3423e" ;;
     *) zerohash="" ;;
   esac
-  time=$(/usr/bin/time -f "%e" timeout --kill-after=2s 20s polkadot-js-api --ws "$rpc" rpc.chain.getBlock "$zerohash" 2>&1 | tail -n1)
+  time=$(/usr/bin/time -f "%e" -o /dev/stdout timeout --kill-after=2s 20s polkadot-js-api --ws "$rpc" rpc.chain.getBlock "$zerohash" 2>"$error.tmp" | tail -n1)
   if [ $? -eq 0 ]; then
     if [[ $time =~ ^[+-]?[0-9]+([.][0-9]+)?$ ]]; then
       echo "rpc_getblockzero{wss=\"$rpc\",network=\"$network\",zone=\"$zone\"} $time $timestamp" >> $prom
@@ -71,6 +71,7 @@ for rpc in "${!filtered_rpcs[@]}"; do
     else
       echo "rpc_error{wss=\"$rpc\",network=\"$network\",zone=\"$zone\",error=\"blockzero\"} 1 $timestamp" >> $errorprom
       echo "`date`: $rpc error: blockzero=$time" >> $error
+      cat $error.tmp | grep -v decorated >> $error
     fi
   else
     echo "rpc_error{wss=\"$rpc\",network=\"$network\",zone=\"$zone\",error=\"blockzero\"} 1 $timestamp" >> $errorprom
@@ -86,7 +87,7 @@ echo "# TYPE rpc_connect gauge" >> $prom
 for rpc in "${!filtered_rpcs[@]}"; do
   network=${filtered_rpcs[$rpc]}
   rpcdomain=$(echo $rpc | cut -d\/ -f3,4)
-  time=$(/usr/bin/time -f "%e" /usr/bin/timeout --foreground --kill-after=2s 5s /usr/local/bin/websocat -uU $rpc 2>&1)
+  time=$(/usr/bin/time -f "%e" -o /dev/stdout /usr/bin/timeout --foreground --kill-after=2s 5s /usr/local/bin/websocat -uU $rpc 2>"$error.tmp")
   if [ $? -eq 0 ]; then
     echo "rpc_connect{wss=\"$rpc\",network=\"$network\",zone=\"$zone\"} $time $timestamp" >> $prom
     echo "rpc_error{wss=\"$rpc\",network=\"$network\",zone=\"$zone\",error=\"connect\"} 0 $timestamp" >> $errorprom
@@ -95,6 +96,7 @@ for rpc in "${!filtered_rpcs[@]}"; do
     echo "rpc_error{wss=\"$rpc\",network=\"$network\",zone=\"$zone\",error=\"connect\"} 1 $timestamp" >> $errorprom
     echo "rpc_error{wss=\"$rpc\",network=\"$network\",zone=\"$zone\",error=\"code\"} 0 $timestamp" >> $errorprom
     echo "`date`: $rpc error: connect=$time" >> $error
+    cat $error.tmp | grep -v decorated >> $error
   fi
 done
 
@@ -105,10 +107,11 @@ echo "# TYPE rpc_version gauge" >> $prom
 
 for rpc in "${!filtered_rpcs[@]}"; do
   network=${filtered_rpcs[$rpc]}
-  version=$(timeout --kill-after=2s 5s polkadot-js-api --ws "$rpc" rpc.system.version 2>&1 | grep version | cut -d\" -f4)
+  version=$(timeout --kill-after=2s 5s polkadot-js-api --ws "$rpc" rpc.system.version 2>"$error.tmp" | grep version | cut -d\" -f4)
   if [ -z "$version" ]; then
     echo "rpc_error{wss=\"$rpc\",network=\"$network\",zone=\"$zone\",error=\"version\"} 1 $timestamp" >> $errorprom
     echo "`date`: $rpc error: version=$version" >> $error
+    cat $error.tmp | grep -v decorated >> $error
   else
     echo "rpc_version{wss=\"$rpc\",network=\"$network\",zone=\"$zone\",version=\"$version\"} 1 $timestamp" >> $prom
     echo "rpc_error{wss=\"$rpc\",network=\"$network\",zone=\"$zone\",error=\"version\"} 0 $timestamp" >> $errorprom
