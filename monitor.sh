@@ -70,12 +70,12 @@ for rpc in "${!filtered_rpcs[@]}"; do
       echo "rpc_error{wss=\"$rpc\",network=\"$network\",zone=\"$zone\",error=\"blockzero\"} 0 $timestamp" >> $errorprom
     else
       echo "rpc_error{wss=\"$rpc\",network=\"$network\",zone=\"$zone\",error=\"blockzero\"} 1 $timestamp" >> $errorprom
-      echo "`date`: $rpc error: blockzero=$time" >> $error
+      echo "`date`: $rpc Error or timeout retrieving blockzero" >> $error
       cat $error.tmp | grep -v decorated >> $error
     fi
   else
     echo "rpc_error{wss=\"$rpc\",network=\"$network\",zone=\"$zone\",error=\"blockzero\"} 1 $timestamp" >> $errorprom
-    echo "`date`: $rpc error: blockzero=$time" >> $error
+    echo "`date`: $rpc Error or timeout retrieving block zero" >> $error
   fi
 done
 
@@ -95,7 +95,7 @@ for rpc in "${!filtered_rpcs[@]}"; do
   else
     echo "rpc_error{wss=\"$rpc\",network=\"$network\",zone=\"$zone\",error=\"connect\"} 1 $timestamp" >> $errorprom
     echo "rpc_error{wss=\"$rpc\",network=\"$network\",zone=\"$zone\",error=\"code\"} 0 $timestamp" >> $errorprom
-    echo "`date`: $rpc error: connect=$time" >> $error
+    echo "`date`: $rpc Error or timeout connecting to endpoint" >> $error
     cat $error.tmp | grep -v decorated >> $error
   fi
 done
@@ -107,10 +107,10 @@ echo "# TYPE rpc_version gauge" >> $prom
 
 for rpc in "${!filtered_rpcs[@]}"; do
   network=${filtered_rpcs[$rpc]}
-  version=$(timeout --kill-after=2s 5s polkadot-js-api --ws "$rpc" rpc.system.version 2>"$error.tmp" | grep version | cut -d\" -f4)
+  version=$(timeout --kill-after=2s 10s polkadot-js-api --ws "$rpc" rpc.system.version 2>"$error.tmp" | grep version | cut -d\" -f4)
   if [ -z "$version" ]; then
     echo "rpc_error{wss=\"$rpc\",network=\"$network\",zone=\"$zone\",error=\"version\"} 1 $timestamp" >> $errorprom
-    echo "`date`: $rpc error: version=$version" >> $error
+    echo "`date`: $rpc Error or timeout retrieving version" >> $error
     cat $error.tmp | grep -v decorated >> $error
   else
     echo "rpc_version{wss=\"$rpc\",network=\"$network\",zone=\"$zone\",version=\"$version\"} 1 $timestamp" >> $prom
