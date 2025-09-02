@@ -5,6 +5,7 @@ declare -A rpcs
 
 # Blockops
 rpcs[wss://polkadot-public-rpc.blockops.network/ws]="polkadot,eu-central,blockops"
+rpcs[wss://kusama-public-rpc.blockops.network/ws]="kusama,eu-central,blockops"
 # Dwellir 
 rpcs[wss://asset-hub-polkadot-rpc.n.dwellir.com]="polkadot-assethub,eu-central,Dwellir"
 rpcs[wss://bridge-hub-polkadot-rpc.n.dwellir.com]="polkadot-bridgehub,eu-central,Dwellir"
