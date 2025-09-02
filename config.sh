@@ -5,7 +5,6 @@ declare -A rpcs
 
 # Blockops
 rpcs[wss://polkadot-public-rpc.blockops.network/ws]="polkadot,eu-central,blockops"
-rpcs[wss://kusama-public-rpc.blockops.network/ws]="kusama,eu-central,blockops"
 # Dwellir 
 rpcs[wss://asset-hub-polkadot-rpc.n.dwellir.com]="polkadot-assethub,eu-central,Dwellir"
 rpcs[wss://bridge-hub-polkadot-rpc.n.dwellir.com]="polkadot-bridgehub,eu-central,Dwellir"
@@ -34,6 +33,8 @@ rpcs[wss://dot-rpc.stakeworld.io/assethub]="polkadot-assethub,eu-central,stakewo
 ###############
 # KSM endpoints
 ###############
+# Blockops
+rpcs[wss://kusama-public-rpc.blockops.network/ws]="kusama,eu-central,blockops"
 # Dwellir
 rpcs[wss://kusama-rpc.n.dwellir.com]="kusama,eu-central,Dwellir"
 rpcs[wss://coretime-kusama-rpc.n.dwellir.com]="kusama-coretime,eu-central,Dwellir"
@@ -51,6 +52,8 @@ rpcs[wss://statemine.public.curie.radiumblock.co/ws]="kusama-assethub,us-east,Ra
 rpcs[wss://bridgehub-kusama.public.curie.radiumblock.co/ws]="kusama-bridgehub,us-east,RadiumBlock"
 # Stakeworld 
 rpcs[wss://ksm-rpc.stakeworld.io]="kusama,eu-central,stakeworld"
-# Dwellir westend
+###############
+# WND endpoints
+###############
+# Dwellir
 rpcs[wss://westend-rpc.n.dwellir.com]="westend,eu-central,Dwellir"
-
