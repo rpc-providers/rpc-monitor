@@ -37,6 +37,7 @@ rpcs[wss://dot-rpc.stakeworld.io/assethub]="polkadot-assethub,eu-central,stakewo
 rpcs[wss://kusama-public-rpc.blockops.network/ws]="kusama,eu-central,blockops"
 # Dwellir
 rpcs[wss://kusama-rpc.n.dwellir.com]="kusama,eu-central,Dwellir"
+rpcs[wss://bridge-hub-kusama-rpc.n.dwellir.com]="kusama-bridgehub,eu-central,Dwellir"
 rpcs[wss://coretime-kusama-rpc.n.dwellir.com]="kusama-coretime,eu-central,Dwellir"
 rpcs[wss://encointer-kusama-rpc.n.dwellir.com]="kusama-encointer,eu-central,Dwellir"
 rpcs[wss://people-kusama-rpc.n.dwellir.com]="kusama-people,eu-central,Dwellir"
