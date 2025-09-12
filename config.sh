@@ -50,7 +50,6 @@ rpcs[wss://assethub-kusama.api.onfinality.io/public-ws]="kusama-assethub,ap-sout
 rpcs[wss://bridgehub-kusama.api.onfinality.io/public-ws]="kusama-bridgehub,ap-southeast,onfinality"
 # Radiumblock
 rpcs[wss://statemine.public.curie.radiumblock.co/ws]="kusama-assethub,us-east,RadiumBlock"
-rpcs[wss://bridgehub-kusama.public.curie.radiumblock.co/ws]="kusama-bridgehub,us-east,RadiumBlock"
 # Stakeworld 
 rpcs[wss://ksm-rpc.stakeworld.io]="kusama,eu-central,stakeworld"
 ###############
