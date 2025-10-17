@@ -19,9 +19,9 @@ rpcs[wss://rpc-asset-hub-polkadot.luckyfriday.io]="polkadot-assethub,us-east,Glo
 rpcs[wss://rpc-bridge-hub-polkadot.luckyfriday.io]="polkadot-bridgehub,us-east,GlobalStake"
 # Onfinality 
 rpcs[wss://polkadot.api.onfinality.io/public-ws]="polkadot,us-east,onfinality"
-rpcs[wss://statemint.api.onfinality.io/public-ws]="polkadot-assethub,ap-southeast,onfinality"
-rpcs[wss://bridgehub-polkadot.api.onfinality.io/public-ws]="polkadot-bridgehub,ap-southeast,onfinality"
-rpcs[wss://collectives.api.onfinality.io/public-ws]="polkadot-collectives,ap-southeast,onfinality"
+rpcs[wss://statemint.api.onfinality.io/public-ws]="polkadot-assethub,us-east,onfinality"
+rpcs[wss://bridgehub-polkadot.api.onfinality.io/public-ws]="polkadot-bridgehub,us-east,onfinality"
+rpcs[wss://collectives.api.onfinality.io/public-ws]="polkadot-collectives,us-east,onfinality"
 rpcs[wss://coretime-polkadot.api.onfinality.io/public-ws]="polkadot-coretime,us-east,onfinality"
 # Radiumblock
 rpcs[wss://polkadot.public.curie.radiumblock.co/ws]="polkadot,us-east,RadiumBlock"
@@ -46,8 +46,8 @@ rpcs[wss://rpc-kusama.helixstreet.io]="kusama,eu-central,Helixstreet"
 # Luckyfriday
 rpcs[wss://rpc-kusama.luckyfriday.io]="kusama,us-east,GlobalStake"
 # Onfinality
-rpcs[wss://assethub-kusama.api.onfinality.io/public-ws]="kusama-assethub,ap-southeast,onfinality"
-rpcs[wss://bridgehub-kusama.api.onfinality.io/public-ws]="kusama-bridgehub,ap-southeast,onfinality"
+rpcs[wss://assethub-kusama.api.onfinality.io/public-ws]="kusama-assethub,us-east,onfinality"
+rpcs[wss://bridgehub-kusama.api.onfinality.io/public-ws]="kusama-bridgehub,us-east,onfinality"
 # Radiumblock
 rpcs[wss://statemine.public.curie.radiumblock.co/ws]="kusama-assethub,us-east,RadiumBlock"
 # Stakeworld 
