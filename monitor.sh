@@ -64,18 +64,28 @@ for rpc in "${!filtered_rpcs[@]}"; do
     *) zerohash="" ;;
   esac
   time=$(/usr/bin/time -f "%e" -o /dev/stdout timeout --kill-after=2s 20s polkadot-js-api --ws "$rpc" rpc.chain.getBlock "$zerohash" 2>"$error.tmp" | tail -n1)
-  if [ $? -eq 0 ]; then
+  status=$?
+  if [ $status -eq 0 ]; then
     if [[ $time =~ ^[+-]?[0-9]+([.][0-9]+)?$ ]]; then
       echo "rpc_getblockzero{wss=\"$rpc\",network=\"$network\",zone=\"$zone\"} $time $timestamp" >> $prom
       echo "rpc_error{wss=\"$rpc\",network=\"$network\",zone=\"$zone\",error=\"blockzero\"} 0 $timestamp" >> $errorprom
     else
       echo "rpc_error{wss=\"$rpc\",network=\"$network\",zone=\"$zone\",error=\"blockzero\"} 1 $timestamp" >> $errorprom
-      echo "`date`: $rpc Error or timeout retrieving blockzero ($time)" >> $error
-      cat $error.tmp | grep -v decorated >> $error
+      if [ $status -eq 124 ]; then
+        echo "`date`: $rpc Timeout retrieving blockzero" >> $error
+      else 
+        echo "`date`: $rpc Error retrieving block zero ($time)" >> $error
+        cat $error.tmp | grep -v decorated >> $error
+      fi
     fi
   else
     echo "rpc_error{wss=\"$rpc\",network=\"$network\",zone=\"$zone\",error=\"blockzero\"} 1 $timestamp" >> $errorprom
-    echo "`date`: $rpc Error or timeout retrieving block zero ($time)" >> $error
+    if [ $status -eq 124 ]; then
+      echo "`date`: $rpc Timeout retrieving blockzero" >> $error
+    else
+      echo "`date`: $rpc Error retrieving block zero ($time)" >> $error
+      cat $error.tmp | grep -v decorated >> $error
+    fi
   fi
 done
 
@@ -88,15 +98,20 @@ for rpc in "${!filtered_rpcs[@]}"; do
   network=${filtered_rpcs[$rpc]}
   rpcdomain=$(echo $rpc | cut -d\/ -f3,4)
   time=$(/usr/bin/time -f "%e" -o /dev/stdout /usr/bin/timeout --foreground --kill-after=2s 5s /usr/local/bin/websocat -uU $rpc 2>"$error.tmp")
-  if [ $? -eq 0 ]; then
+  status=$?
+  if [ $status -eq 0 ]; then
     echo "rpc_connect{wss=\"$rpc\",network=\"$network\",zone=\"$zone\"} $time $timestamp" >> $prom
     echo "rpc_error{wss=\"$rpc\",network=\"$network\",zone=\"$zone\",error=\"connect\"} 0 $timestamp" >> $errorprom
     echo "rpc_error{wss=\"$rpc\",network=\"$network\",zone=\"$zone\",error=\"code\"} 0 $timestamp" >> $errorprom
   else
     echo "rpc_error{wss=\"$rpc\",network=\"$network\",zone=\"$zone\",error=\"connect\"} 1 $timestamp" >> $errorprom
     echo "rpc_error{wss=\"$rpc\",network=\"$network\",zone=\"$zone\",error=\"code\"} 0 $timestamp" >> $errorprom
-    echo "`date`: $rpc Error or timeout connecting to endpoint ($time)" >> $error
-    cat $error.tmp | grep -v decorated >> $error
+    if [ $status -eq 124 ]; then
+      echo "`date`: $rpc Timeout connecting to endpoint" >> $error
+    else	    
+      echo "`date`: $rpc Error connecting to endpoint ($time)" >> $error
+      cat $error.tmp | grep -v decorated >> $error
+    fi
   fi
 done
 
@@ -108,9 +123,13 @@ echo "# TYPE rpc_version gauge" >> $prom
 for rpc in "${!filtered_rpcs[@]}"; do
   network=${filtered_rpcs[$rpc]}
   version=$(timeout --kill-after=2s 10s polkadot-js-api --ws "$rpc" rpc.system.version 2>"$error.tmp" | grep version | cut -d\" -f4)
-  if [ -z "$version" ]; then
+  status=$?
+  if [ $status -eq 124 ]; then
     echo "rpc_error{wss=\"$rpc\",network=\"$network\",zone=\"$zone\",error=\"version\"} 1 $timestamp" >> $errorprom
-    echo "`date`: $rpc Error or timeout retrieving version ($version)" >> $error
+    echo "`date`: $rpc Timeout retrieving version" >> $error
+  elif [ -z "$version" ]; then
+    echo "rpc_error{wss=\"$rpc\",network=\"$network\",zone=\"$zone\",error=\"version\"} 1 $timestamp" >> $errorprom
+    echo "`date`: $rpc Error retrieving version ($version)" >> $error
     cat $error.tmp | grep -v decorated >> $error
   else
     echo "rpc_version{wss=\"$rpc\",network=\"$network\",zone=\"$zone\",version=\"$version\"} 1 $timestamp" >> $prom
