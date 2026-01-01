@@ -72,18 +72,18 @@ for rpc in "${!filtered_rpcs[@]}"; do
     else
       echo "rpc_error{wss=\"$rpc\",network=\"$network\",zone=\"$zone\",error=\"blockzero\"} 1 $timestamp" >> $errorprom
       if [ $status -eq 124 ]; then
-        echo "`date`: $rpc Timeout retrieving blockzero" >> $error
+	echo "`date`: $rpc Error Timeout retrieving block zero ($zone)" >> $error
       else 
-        echo "`date`: $rpc Error retrieving block zero ($time)" >> $error
+        echo "`date`: $rpc Error Retrieving block zero ($zone)" >> $error
         cat $error.tmp | grep -v decorated >> $error
       fi
     fi
   else
     echo "rpc_error{wss=\"$rpc\",network=\"$network\",zone=\"$zone\",error=\"blockzero\"} 1 $timestamp" >> $errorprom
     if [ $status -eq 124 ]; then
-      echo "`date`: $rpc Timeout retrieving blockzero" >> $error
+      echo "`date`: $rpc Error Timeout retrieving block zero ($zone)" >> $error
     else
-      echo "`date`: $rpc Error retrieving block zero ($time)" >> $error
+      echo "`date`: $rpc Error Retrieving block zero ($zone)" >> $error
       cat $error.tmp | grep -v decorated >> $error
     fi
   fi
@@ -107,9 +107,9 @@ for rpc in "${!filtered_rpcs[@]}"; do
     echo "rpc_error{wss=\"$rpc\",network=\"$network\",zone=\"$zone\",error=\"connect\"} 1 $timestamp" >> $errorprom
     echo "rpc_error{wss=\"$rpc\",network=\"$network\",zone=\"$zone\",error=\"code\"} 0 $timestamp" >> $errorprom
     if [ $status -eq 124 ]; then
-      echo "`date`: $rpc Timeout connecting to endpoint" >> $error
+      echo "`date`: $rpc Error Timeout connecting to endpoint ($zone)" >> $error
     else	    
-      echo "`date`: $rpc Error connecting to endpoint ($time)" >> $error
+      echo "`date`: $rpc Error Connecting to endpoint ($zone)" >> $error
       cat $error.tmp | grep -v decorated >> $error
     fi
   fi
@@ -126,10 +126,10 @@ for rpc in "${!filtered_rpcs[@]}"; do
   status=$?
   if [ $status -eq 124 ]; then
     echo "rpc_error{wss=\"$rpc\",network=\"$network\",zone=\"$zone\",error=\"version\"} 1 $timestamp" >> $errorprom
-    echo "`date`: $rpc Timeout retrieving version" >> $error
+    echo "`date`: $rpc Error Timeout retrieving version ($zone)" >> $error
   elif [ -z "$version" ]; then
     echo "rpc_error{wss=\"$rpc\",network=\"$network\",zone=\"$zone\",error=\"version\"} 1 $timestamp" >> $errorprom
-    echo "`date`: $rpc Error retrieving version ($version)" >> $error
+    echo "`date`: $rpc Error retrieving version ($zone)" >> $error
     cat $error.tmp | grep -v decorated >> $error
   else
     echo "rpc_version{wss=\"$rpc\",network=\"$network\",zone=\"$zone\",version=\"$version\"} 1 $timestamp" >> $prom
