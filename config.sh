@@ -25,8 +25,9 @@ rpcs[wss://collectives.api.onfinality.io/public-ws]="polkadot-collectives,us-eas
 rpcs[wss://coretime-polkadot.api.onfinality.io/public-ws]="polkadot-coretime,us-east,onfinality"
 # Radiumblock
 rpcs[wss://polkadot.public.curie.radiumblock.co/ws]="polkadot,us-east,RadiumBlock"
-# Simplystaking
+# SimplyStaking
 rpcs[wss://spectrum-03.simplystaking.xyz/cG9sa2Fkb3QtMDMtOTFkMmYwZGYtcG9sa2Fkb3Q/LjwBJpV3dIKyWQ/polkadot/mainnet/]="polkadot,us-east,Simply Staking"
+rpcs[wss://spectrum-03.simplystaking.xyz/cG9sa2Fkb3QtMDMtOTFkMmYwZGYtcG9sa2Fkb3Q/mgX--uWlEtmNKw/polkadotbridgehub/mainnet/]="polkadot-bridgehub,us-east,Simply Staking"
 # Stakeworld 
 rpcs[wss://dot-rpc.stakeworld.io]="polkadot,eu-central,stakeworld"
 rpcs[wss://dot-rpc.stakeworld.io/assethub]="polkadot-assethub,eu-central,stakeworld"
@@ -50,6 +51,9 @@ rpcs[wss://assethub-kusama.api.onfinality.io/public-ws]="kusama-assethub,us-east
 rpcs[wss://bridgehub-kusama.api.onfinality.io/public-ws]="kusama-bridgehub,us-east,onfinality"
 # Radiumblock
 rpcs[wss://statemine.public.curie.radiumblock.co/ws]="kusama-assethub,us-east,RadiumBlock"
+# SimplyStaking
+rpcs[wss://spectrum-03.simplystaking.xyz/cG9sa2Fkb3QtMDMtOTFkMmYwZGYtcG9sa2Fkb3Q/QXq7QZ6Q60NDzA/kusama/mainnet/]="kusama,us-east,Simply Staking"
+rpcs[wss://spectrum-03.simplystaking.xyz/cG9sa2Fkb3QtMDMtOTFkMmYwZGYtcG9sa2Fkb3Q/balkpUVauqyv8g/kusamabridgehub/mainnet/]="kusama-bridgehub,us-east,Simply Staking"
 # Stakeworld 
 rpcs[wss://ksm-rpc.stakeworld.io]="kusama,eu-central,stakeworld"
 ###############
