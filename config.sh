@@ -24,6 +24,7 @@ rpcs[wss://statemint.api.onfinality.io/public-ws]="polkadot-assethub,us-east,onf
 # SimplyStaking
 rpcs[wss://spectrum-03.simplystaking.xyz/cG9sa2Fkb3QtMDMtOTFkMmYwZGYtcG9sa2Fkb3Q/LjwBJpV3dIKyWQ/polkadot/mainnet/]="polkadot,us-east,Simply Staking"
 rpcs[wss://spectrum-03.simplystaking.xyz/cG9sa2Fkb3QtMDMtOTFkMmYwZGYtcG9sa2Fkb3Q/mgX--uWlEtmNKw/polkadotbridgehub/mainnet/]="polkadot-bridgehub,us-east,Simply Staking"
+rpcs[wss://spectrum-03.simplystaking.xyz/cG9sa2Fkb3QtMDMtOTFkMmYwZGYtcG9sa2Fkb3Q/9QbAeudedsupNA/polkadotbulletin/mainnet/]="polkadot-bulletin,us-east,Simply Staking"
 # Stakeworld 
 rpcs[wss://dot-rpc.stakeworld.io]="polkadot,eu-central,stakeworld"
 ###############
