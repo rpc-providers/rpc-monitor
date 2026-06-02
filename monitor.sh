@@ -56,10 +56,13 @@ for rpc in "${!filtered_rpcs[@]}"; do
     "polkadot-assethub") zerohash="0x68d56f15f85d3136970ec16946040bc1752654e906147f7e43e9d539d7c3de2f" ;;
     "polkadot-collectives") zerohash="0x46ee89aa2eedd13e988962630ec9fb7565964cf5023bb351f2b6b25c1b68b0b2" ;;
     "polkadot-bridgehub") zerohash="0xdcf691b5a3fbe24adc99ddc959c0561b973e329b1aef4c4b22e7bb2ddecb4464" ;;
+    "polkadot-coretime") zerohash="0xefb56e30d9b4a24099f88820987d0f45fb645992416535d87650d98e00f46fc4" ;;
+    "polkadot-people") zerohash="0x67fa177a097bfa18f77ea95ab56e9bcdfeb0e5b8a40e46298bb93e16b6fc5008" ;;
     "kusama") zerohash="0xb0a8d493285c2df73290dfb7e61f870f17b41801197a149ca93654499ea3dafe" ;;
     "kusama-assethub") zerohash="0x48239ef607d7928874027a43a67689209727dfb3d3dc5e5b03a39bdc2eda771a" ;;
     "kusama-bridgehub") zerohash="0x00dcb981df86429de8bbacf9803401f09485366c44efbf53af9ecfab03adc7e5" ;;
     "kusama-encointer") zerohash="0x7dd99936c1e9e6d1ce7d90eb6f33bea8393b4bf87677d675aa63c9cb3e8c5b5b" ;;
+    "kusama-coretime") zerohash="0x638cd2b9af4b3bb54b8c1f0d22711fc89924ca93300f0caf25a580432b29d050" ;;
     "westend") zerohash="0xe143f23803ac50e8f6f8e62695d1ce9e4e1d68aa36c1cd2cfd15340213f3423e" ;;
     *) zerohash="" ;;
   esac
