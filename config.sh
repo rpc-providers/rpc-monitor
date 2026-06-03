@@ -18,6 +18,7 @@ rpcs[wss://rpc-polkadot.helixstreet.io]="polkadot,eu-central,Helixstreet"
 # Luckyfriday
 rpcs[wss://rpc-polkadot.luckyfriday.io]="polkadot,us-east,GlobalStake"
 rpcs[wss://rpc-asset-hub-polkadot.luckyfriday.io]="polkadot-assethub,us-east,GlobalStake"
+rpcs[wss://rpc-bulletin.luckyfriday.io]="polkadot-bulletin,us-east,GlobalStake"
 # Onfinality 
 rpcs[wss://polkadot.api.onfinality.io/public-ws]="polkadot,us-east,onfinality"
 rpcs[wss://statemint.api.onfinality.io/public-ws]="polkadot-assethub,us-east,onfinality"
