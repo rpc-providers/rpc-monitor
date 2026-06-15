@@ -1,0 +1,174 @@
+output_path = "/var/www/prom/index.txt"
+lock_path = "/tmp/rpc-monitor.lock"
+concurrency = 8
+
+[timeouts]
+connect_secs = 5
+block_zero_secs = 20
+get_block_secs = 10
+block_height_secs = 10
+version_secs = 10
+
+[zero_hashes]
+polkadot = "0x91b171bb158e2d3848fa23a9f1c25182fb8e20313b2c1eb49219da7a70ce90c3"
+polkadot-assethub = "0x68d56f15f85d3136970ec16946040bc1752654e906147f7e43e9d539d7c3de2f"
+polkadot-collectives = "0x46ee89aa2eedd13e988962630ec9fb7565964cf5023bb351f2b6b25c1b68b0b2"
+polkadot-bridgehub = "0xdcf691b5a3fbe24adc99ddc959c0561b973e329b1aef4c4b22e7bb2ddecb4464"
+polkadot-coretime = "0xefb56e30d9b4a24099f88820987d0f45fb645992416535d87650d98e00f46fc4"
+polkadot-people = "0x67fa177a097bfa18f77ea95ab56e9bcdfeb0e5b8a40e46298bb93e16b6fc5008"
+kusama = "0xb0a8d493285c2df73290dfb7e61f870f17b41801197a149ca93654499ea3dafe"
+kusama-assethub = "0x48239ef607d7928874027a43a67689209727dfb3d3dc5e5b03a39bdc2eda771a"
+kusama-bridgehub = "0x00dcb981df86429de8bbacf9803401f09485366c44efbf53af9ecfab03adc7e5"
+kusama-encointer = "0x7dd99936c1e9e6d1ce7d90eb6f33bea8393b4bf87677d675aa63c9cb3e8c5b5b"
+kusama-coretime = "0x638cd2b9af4b3bb54b8c1f0d22711fc89924ca93300f0caf25a580432b29d050"
+westend = "0xe143f23803ac50e8f6f8e62695d1ce9e4e1d68aa36c1cd2cfd15340213f3423e"
+
+[[endpoints]]
+url = "wss://polkadot-rpc.n.dwellir.com"
+network = "polkadot"
+zone = "eu-central"
+provider = "Dwellir"
+
+[[endpoints]]
+url = "wss://asset-hub-polkadot-rpc.n.dwellir.com"
+network = "polkadot-assethub"
+zone = "eu-central"
+provider = "Dwellir"
+
+[[endpoints]]
+url = "wss://bridge-hub-polkadot-rpc.n.dwellir.com"
+network = "polkadot-bridgehub"
+zone = "eu-central"
+provider = "Dwellir"
+
+[[endpoints]]
+url = "wss://collectives-polkadot-rpc.n.dwellir.com"
+network = "polkadot-collectives"
+zone = "eu-central"
+provider = "Dwellir"
+
+[[endpoints]]
+url = "wss://coretime-polkadot-rpc.n.dwellir.com"
+network = "polkadot-coretime"
+zone = "eu-central"
+provider = "Dwellir"
+
+[[endpoints]]
+url = "wss://people-polkadot-rpc.n.dwellir.com"
+network = "polkadot-people"
+zone = "eu-central"
+provider = "Dwellir"
+
+[[endpoints]]
+url = "wss://rpc-polkadot.helixstreet.io"
+network = "polkadot"
+zone = "eu-central"
+provider = "Helixstreet"
+
+[[endpoints]]
+url = "wss://rpc-polkadot.luckyfriday.io"
+network = "polkadot"
+zone = "us-east"
+provider = "GlobalStake"
+
+[[endpoints]]
+url = "wss://rpc-asset-hub-polkadot.luckyfriday.io"
+network = "polkadot-assethub"
+zone = "us-east"
+provider = "GlobalStake"
+
+[[endpoints]]
+url = "wss://rpc-bulletin.luckyfriday.io"
+network = "polkadot-bulletin"
+zone = "us-east"
+provider = "GlobalStake"
+
+[[endpoints]]
+url = "wss://polkadot.api.onfinality.io/public-ws"
+network = "polkadot"
+zone = "us-east"
+provider = "onfinality"
+
+[[endpoints]]
+url = "wss://statemint.api.onfinality.io/public-ws"
+network = "polkadot-assethub"
+zone = "us-east"
+provider = "onfinality"
+
+[[endpoints]]
+url = "wss://spectrum-03.simplystaking.xyz/cG9sa2Fkb3QtMDMtOTFkMmYwZGYtcG9sa2Fkb3Q/LjwBJpV3dIKyWQ/polkadot/mainnet/"
+network = "polkadot"
+zone = "us-east"
+provider = "Simply Staking"
+
+[[endpoints]]
+url = "wss://spectrum-03.simplystaking.xyz/cG9sa2Fkb3QtMDMtOTFkMmYwZGYtcG9sa2Fkb3Q/mgX--uWlEtmNKw/polkadotbridgehub/mainnet/"
+network = "polkadot-bridgehub"
+zone = "us-east"
+provider = "Simply Staking"
+
+[[endpoints]]
+url = "wss://spectrum-03.simplystaking.xyz/cG9sa2Fkb3QtMDMtOTFkMmYwZGYtcG9sa2Fkb3Q/9QbAeudedsupNA/polkadotbulletin/mainnet/"
+network = "polkadot-bulletin"
+zone = "us-east"
+provider = "Simply Staking"
+
+[[endpoints]]
+url = "wss://dot-rpc.stakeworld.io"
+network = "polkadot"
+zone = "eu-central"
+provider = "stakeworld"
+
+[[endpoints]]
+url = "wss://kusama-rpc.n.dwellir.com"
+network = "kusama"
+zone = "eu-central"
+provider = "Dwellir"
+
+[[endpoints]]
+url = "wss://coretime-kusama-rpc.n.dwellir.com"
+network = "kusama-coretime"
+zone = "eu-central"
+provider = "Dwellir"
+
+[[endpoints]]
+url = "wss://encointer-kusama-rpc.n.dwellir.com"
+network = "kusama-encointer"
+zone = "eu-central"
+provider = "Dwellir"
+
+[[endpoints]]
+url = "wss://rpc-kusama.helixstreet.io"
+network = "kusama"
+zone = "eu-central"
+provider = "Helixstreet"
+
+[[endpoints]]
+url = "wss://rpc-asset-hub-kusama.luckyfriday.io"
+network = "kusama-assethub"
+zone = "us-east"
+provider = "GlobalStake"
+
+[[endpoints]]
+url = "wss://kusama.api.onfinality.io/public-ws"
+network = "kusama"
+zone = "us-east"
+provider = "onfinality"
+
+[[endpoints]]
+url = "wss://spectrum-03.simplystaking.xyz/cG9sa2Fkb3QtMDMtOTFkMmYwZGYtcG9sa2Fkb3Q/QXq7QZ6Q60NDzA/kusama/mainnet/"
+network = "kusama"
+zone = "us-east"
+provider = "Simply Staking"
+
+[[endpoints]]
+url = "wss://spectrum-03.simplystaking.xyz/cG9sa2Fkb3QtMDMtOTFkMmYwZGYtcG9sa2Fkb3Q/balkpUVauqyv8g/kusamabridgehub/mainnet/"
+network = "kusama-bridgehub"
+zone = "us-east"
+provider = "Simply Staking"
+
+[[endpoints]]
+url = "wss://ksm-rpc.stakeworld.io"
+network = "kusama"
+zone = "eu-central"
+provider = "stakeworld"
