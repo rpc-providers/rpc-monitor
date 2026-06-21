@@ -1,0 +1,18 @@
+[Unit]
+Description=RPC Providers monitor
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/rpc-monitor
+Environment=RPC_MONITOR_ZONE=eu-central
+ExecStart=/opt/rpc-monitor/target/release/rpc-monitor --config /opt/rpc-monitor/monitor.toml --zone ${RPC_MONITOR_ZONE}
+User=root
+Group=root
+
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/www/prom /tmp

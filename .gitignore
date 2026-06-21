@@ -1,2 +1,13 @@
-error.log
-zone.sh
+# Rust build output
+/target/
+
+# Runtime and temporary files
+*.log
+*.tmp
+/tmp/
+dist/
+
+# Editor / OS files
+.vscode/
+.idea/
+.DS_Store

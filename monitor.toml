@@ -9,6 +9,25 @@ get_block_secs = 10
 block_height_secs = 10
 version_secs = 10
 
+[report]
+prometheus_url = "http://localhost:9090"
+
+[report.network_to_chain]
+polkadot-bulletin = "bulletin-polkadot"
+polkadot-coretime = "coretime-polkadot"
+kusama-coretime = "coretime-kusama"
+polkadot-bridgehub = "bridge-hub-polkadot"
+kusama-bridgehub = "bridge-hub-kusama"
+polkadot-assethub = "asset-hub-polkadot"
+kusama-assethub = "asset-hub-kusama"
+polkadot-collectives = "collectives_polkadot"
+kusama-encointer = "encointer-kusama"
+polkadot-people = "people-polkadot"
+kusama-people = "people-kusama"
+westend = "westend2"
+polkadot = "polkadot"
+kusama = "ksmcc3"
+
 [zero_hashes]
 polkadot = "0x91b171bb158e2d3848fa23a9f1c25182fb8e20313b2c1eb49219da7a70ce90c3"
 polkadot-assethub = "0x68d56f15f85d3136970ec16946040bc1752654e906147f7e43e9d539d7c3de2f"
