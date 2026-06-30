@@ -191,3 +191,9 @@ url = "wss://ksm-rpc.stakeworld.io"
 network = "kusama"
 zone = "eu-central"
 provider = "stakeworld"
+
+[[endpoints]]
+url = "wss://polkadot-mainnet.linkpool.com"
+network = "polkadot"
+zone = "eu-central"
+provider = "LinkPool"
