@@ -121,6 +121,12 @@ zone = "us-east"
 provider = "Simply Staking"
 
 [[endpoints]]
+url = "wss://spectrum-03.simplystaking.xyz/RcHPQCOlyKRDTS/v4uorCoEDm5uOA/polkadotassethub/mn/420420419/dedicated_polkadot/archive/ws/"
+network = "polkadot-assethub"
+zone = "us-east"
+provider = "Simply Staking"
+
+[[endpoints]]
 url = "wss://spectrum-03.simplystaking.xyz/cG9sa2Fkb3QtMDMtOTFkMmYwZGYtcG9sa2Fkb3Q/mgX--uWlEtmNKw/polkadotbridgehub/mainnet/"
 network = "polkadot-bridgehub"
 zone = "us-east"
