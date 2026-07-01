@@ -8,7 +8,7 @@ use std::{
 };
 
 use anyhow::{anyhow, bail, Context, Result};
-use chrono::{DateTime, NaiveDate, TimeDelta, Utc};
+use chrono::{DateTime, NaiveDate, SecondsFormat, TimeDelta, Utc};
 use clap::{Args as ClapArgs, Parser, Subcommand};
 use fs2::FileExt;
 use futures_util::{SinkExt, StreamExt};
@@ -61,8 +61,16 @@ enum Command {
 
 #[derive(ClapArgs, Debug)]
 struct ReportCommand {
-    #[arg(long)]
+    #[arg(long, conflicts_with_all = ["start", "end"])]
     month: Option<String>,
+
+    /// Start boundary as DD-MM-YYYY, YYYY-MM-DD or an RFC3339 timestamp.
+    #[arg(long, requires = "end", conflicts_with = "month")]
+    start: Option<String>,
+
+    /// End boundary as DD-MM-YYYY, YYYY-MM-DD or an RFC3339 timestamp.
+    #[arg(long, requires = "start", conflicts_with = "month")]
+    end: Option<String>,
 
     #[arg(long)]
     prometheus_url: Option<String>,
@@ -645,7 +653,11 @@ async fn run_report(config: &Config, args: &ReportCommand) -> Result<()> {
         return run_short_report(config, args, short_args).await;
     }
 
-    let period = ReportPeriod::from_args(args.month.as_deref())?;
+    let period = ReportPeriod::from_args(
+        args.month.as_deref(),
+        args.start.as_deref(),
+        args.end.as_deref(),
+    )?;
     let prometheus_url = args
         .prometheus_url
         .as_deref()
@@ -796,9 +808,17 @@ struct ReportPeriod {
 }
 
 impl ReportPeriod {
-    fn from_args(month: Option<&str>) -> Result<Self> {
+    fn from_args(month: Option<&str>, start: Option<&str>, end: Option<&str>) -> Result<Self> {
         if let Some(month) = month {
             return Self::from_month(month);
+        }
+
+        if let (Some(start), Some(end)) = (start, end) {
+            return Self::from_boundaries(start, end, None);
+        }
+
+        if start.is_some() || end.is_some() {
+            bail!("--start and --end must be provided together");
         }
 
         let end = Utc::now();
@@ -848,8 +868,12 @@ impl ReportPeriod {
     }
 
     fn from_short_args(args: &ShortReportCommand) -> Result<Self> {
-        let end = parse_report_end_boundary(&args.end)?;
-        let start = parse_report_boundary(&args.start, "start")?;
+        Self::from_boundaries(&args.start, &args.end, args.label.as_deref())
+    }
+
+    fn from_boundaries(start: &str, end: &str, label: Option<&str>) -> Result<Self> {
+        let end = parse_report_end_boundary(end)?;
+        let start = parse_report_boundary(start, "start")?;
         if start >= end {
             bail!("--start must be before --end");
         }
@@ -857,11 +881,13 @@ impl ReportPeriod {
         let days = ((end - start).num_seconds() as f64 / 86_400.0).ceil() as u32;
 
         Ok(Self {
-            label: format!(
-                "{} to {}",
-                format_report_datetime(start),
-                format_report_datetime(end)
-            ),
+            label: label.map(ToOwned::to_owned).unwrap_or_else(|| {
+                format!(
+                    "{} to {}",
+                    format_report_datetime(start),
+                    format_report_datetime(end)
+                )
+            }),
             start,
             end,
             days,
@@ -1568,13 +1594,16 @@ fn parse_hex_u64(value: &str) -> Option<u64> {
 fn log_errors(zone: &str, results: &[EndpointResult]) {
     for result in results {
         for err in &result.errors {
+            let observed_at = Utc::now().to_rfc3339_opts(SecondsFormat::Millis, true);
             error!(
+                observed_at = %observed_at,
                 wss = %result.endpoint.url,
                 network = %result.endpoint.network,
                 zone = %zone,
                 error = %err.kind,
                 reason = %err.message,
-                "rpc monitor check failed: check={} wss={} network={} zone={} reason={}",
+                "rpc monitor check failed: observed_at={} check={} wss={} network={} zone={} reason={}",
+                observed_at,
                 err.kind,
                 result.endpoint.url,
                 result.endpoint.network,
@@ -1898,6 +1927,21 @@ d"#
             "2026-02-28 23:59:59 UTC"
         );
         assert_eq!(period.prom_range(), "28d");
+    }
+
+    #[test]
+    fn parses_normal_report_period_from_date_boundaries() {
+        let period = ReportPeriod::from_args(None, Some("01-02-2026"), Some("20-06-2026")).unwrap();
+
+        assert_eq!(period.prom_range(), "12096000s");
+        assert_eq!(
+            format_report_datetime(period.start),
+            "2026-02-01 00:00:00 UTC"
+        );
+        assert_eq!(
+            format_report_datetime(period.end),
+            "2026-06-21 00:00:00 UTC"
+        );
     }
 
     #[test]
