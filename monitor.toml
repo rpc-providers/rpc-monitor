@@ -85,6 +85,18 @@ zone = "eu-central"
 provider = "Helixstreet"
 
 [[endpoints]]
+url = "wss://rpc-people-polkadot.helixstreet.io"
+network = "polkadot-people"
+zone = "eu-central"
+provider = "Helixstreet"
+
+[[endpoints]]
+url = "wss://rpc-asset-hub-polkadot.helixstreet.io"
+network = "polkadot-assethub"
+zone = "eu-central"
+provider = "Helixstreet"
+
+[[endpoints]]
 url = "wss://rpc-polkadot.luckyfriday.io"
 network = "polkadot"
 zone = "us-east"
