@@ -43,38 +43,8 @@ kusama-coretime = "0x638cd2b9af4b3bb54b8c1f0d22711fc89924ca93300f0caf25a580432b2
 westend = "0xe143f23803ac50e8f6f8e62695d1ce9e4e1d68aa36c1cd2cfd15340213f3423e"
 
 [[endpoints]]
-url = "wss://polkadot-rpc.n.dwellir.com"
-network = "polkadot"
-zone = "eu-central"
-provider = "Dwellir"
-
-[[endpoints]]
 url = "wss://asset-hub-polkadot-rpc.n.dwellir.com"
 network = "polkadot-assethub"
-zone = "eu-central"
-provider = "Dwellir"
-
-[[endpoints]]
-url = "wss://bridge-hub-polkadot-rpc.n.dwellir.com"
-network = "polkadot-bridgehub"
-zone = "eu-central"
-provider = "Dwellir"
-
-[[endpoints]]
-url = "wss://collectives-polkadot-rpc.n.dwellir.com"
-network = "polkadot-collectives"
-zone = "eu-central"
-provider = "Dwellir"
-
-[[endpoints]]
-url = "wss://coretime-polkadot-rpc.n.dwellir.com"
-network = "polkadot-coretime"
-zone = "eu-central"
-provider = "Dwellir"
-
-[[endpoints]]
-url = "wss://people-polkadot-rpc.n.dwellir.com"
-network = "polkadot-people"
 zone = "eu-central"
 provider = "Dwellir"
 
@@ -97,28 +67,10 @@ zone = "eu-central"
 provider = "Helixstreet"
 
 [[endpoints]]
-url = "wss://rpc-polkadot.luckyfriday.io"
-network = "polkadot"
-zone = "us-east"
-provider = "GlobalStake"
-
-[[endpoints]]
-url = "wss://rpc-asset-hub-polkadot.luckyfriday.io"
-network = "polkadot-assethub"
-zone = "us-east"
-provider = "GlobalStake"
-
-[[endpoints]]
 url = "wss://rpc-bulletin.luckyfriday.io"
 network = "polkadot-bulletin"
 zone = "us-east"
 provider = "GlobalStake"
-
-[[endpoints]]
-url = "wss://polkadot.api.onfinality.io/public-ws"
-network = "polkadot"
-zone = "us-east"
-provider = "onfinality"
 
 [[endpoints]]
 url = "wss://statemint.api.onfinality.io/public-ws"
@@ -127,20 +79,8 @@ zone = "us-east"
 provider = "onfinality"
 
 [[endpoints]]
-url = "wss://spectrum-03.simplystaking.xyz/cG9sa2Fkb3QtMDMtOTFkMmYwZGYtcG9sa2Fkb3Q/LjwBJpV3dIKyWQ/polkadot/mainnet/"
-network = "polkadot"
-zone = "us-east"
-provider = "Simply Staking"
-
-[[endpoints]]
 url = "wss://spectrum-03.simplystaking.xyz/RcHPQCOlyKRDTS/v4uorCoEDm5uOA/polkadotassethub/mn/420420419/dedicated_polkadot/archive/ws/"
 network = "polkadot-assethub"
-zone = "us-east"
-provider = "Simply Staking"
-
-[[endpoints]]
-url = "wss://spectrum-03.simplystaking.xyz/cG9sa2Fkb3QtMDMtOTFkMmYwZGYtcG9sa2Fkb3Q/mgX--uWlEtmNKw/polkadotbridgehub/mainnet/"
-network = "polkadot-bridgehub"
 zone = "us-east"
 provider = "Simply Staking"
 
@@ -151,64 +91,28 @@ zone = "us-east"
 provider = "Simply Staking"
 
 [[endpoints]]
-url = "wss://dot-rpc.stakeworld.io"
-network = "polkadot"
+url = "wss://rpc-asset-hub-polkadot.stakeworld.io"
+network = "polkadot-assethub"
 zone = "eu-central"
 provider = "stakeworld"
 
 [[endpoints]]
-url = "wss://kusama-rpc.n.dwellir.com"
-network = "kusama"
+url = "wss://rpc-bridge-hub-polkadot.stakeworld.io"
+network = "polkadot-bridgehub"
 zone = "eu-central"
-provider = "Dwellir"
+provider = "stakeworld"
 
 [[endpoints]]
-url = "wss://coretime-kusama-rpc.n.dwellir.com"
-network = "kusama-coretime"
+url = "wss://rpc-people-polkadot.stakeworld.io"
+network = "polkadot-people"
 zone = "eu-central"
-provider = "Dwellir"
-
-[[endpoints]]
-url = "wss://encointer-kusama-rpc.n.dwellir.com"
-network = "kusama-encointer"
-zone = "eu-central"
-provider = "Dwellir"
+provider = "stakeworld"
 
 [[endpoints]]
 url = "wss://rpc-kusama.helixstreet.io"
 network = "kusama"
 zone = "eu-central"
 provider = "Helixstreet"
-
-[[endpoints]]
-url = "wss://rpc-asset-hub-kusama.luckyfriday.io"
-network = "kusama-assethub"
-zone = "us-east"
-provider = "GlobalStake"
-
-[[endpoints]]
-url = "wss://kusama.api.onfinality.io/public-ws"
-network = "kusama"
-zone = "us-east"
-provider = "onfinality"
-
-[[endpoints]]
-url = "wss://spectrum-03.simplystaking.xyz/cG9sa2Fkb3QtMDMtOTFkMmYwZGYtcG9sa2Fkb3Q/QXq7QZ6Q60NDzA/kusama/mainnet/"
-network = "kusama"
-zone = "us-east"
-provider = "Simply Staking"
-
-[[endpoints]]
-url = "wss://spectrum-03.simplystaking.xyz/cG9sa2Fkb3QtMDMtOTFkMmYwZGYtcG9sa2Fkb3Q/balkpUVauqyv8g/kusamabridgehub/mainnet/"
-network = "kusama-bridgehub"
-zone = "us-east"
-provider = "Simply Staking"
-
-[[endpoints]]
-url = "wss://ksm-rpc.stakeworld.io"
-network = "kusama"
-zone = "eu-central"
-provider = "stakeworld"
 
 [[endpoints]]
 url = "wss://polkadot-mainnet.linkpool.com"
