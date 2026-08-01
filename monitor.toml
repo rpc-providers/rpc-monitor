@@ -185,19 +185,19 @@ provider = "Rotko"
 url = "wss://polkadot.gatotech.network"
 network = "polkadot"
 zone = "eu-central"
-provider = "Gatotech"
+provider = "gatotech"
 
 [[endpoints]]
 url = "wss://kusama.gatotech.network"
 network = "kusama"
 zone = "eu-central"
-provider = "Gatotech"
+provider = "gatotech"
 
 [[endpoints]]
 url = "wss://asset-hub-polkadot.gatotech.network"
 network = "polkadot-assethub"
 zone = "eu-central"
-provider = "Gatotech"
+provider = "gatotech"
 
 # [[endpoints]]
 # url = "wss://eth-asset-hub-polkadot.gatotech.network"
