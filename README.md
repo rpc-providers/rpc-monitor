@@ -8,10 +8,15 @@ Public dashboard:
 
 - [RPC Providers Grafana dashboard](https://monitor.rpc-providers.net/)
 
+Public alerting:
+
+- [RPC Providers Telegram alerting group](https://t.me/+8TP1EWkPyAA1Njc0)
+
 Public metric endpoints:
 
 - [mon-eu-central.rpc-providers.net](http://mon-eu-central.rpc-providers.net/)
 - [mon-us-east.rpc-providers.net](http://mon-us-east.rpc-providers.net/)
+- [mon-ap-southeast.rpc-providers.net](http://mon-ap-southeast.rpc-providers.net/)
 
 ## What It Measures
 
@@ -73,9 +78,6 @@ Check the installed build version:
 ```bash
 /opt/rpc-monitor/target/release/rpc-monitor --version
 ```
-
-Releases use [Semantic Versioning](https://semver.org/). The initial stable
-release is `v1.0.0`; use `vMAJOR.MINOR.PATCH` Git tags for later releases.
 
 ## Configuration
 
@@ -200,6 +202,14 @@ Generate a Markdown report for a calendar month:
 report --month 2026-05
 ```
 
+Generate the full report for an arbitrary date range:
+
+```bash
+/opt/rpc-monitor/target/release/rpc-monitor \
+  --config /opt/rpc-monitor/monitor.toml \
+  report --start 01-02-2026 --end 20-06-2026
+```
+
 Generate the compact tender-style report for an arbitrary date range:
 
 ```bash
@@ -209,9 +219,10 @@ Generate the compact tender-style report for an arbitrary date range:
 ```
 
 `report short` contains only the endpoint, zone, network and RPC-call total.
-It accepts `DD-MM-YYYY`, `YYYY-MM-DD`, or RFC3339 timestamps. Date-only
-values are interpreted in UTC: `start` begins at midnight and `end` includes
-the entire given calendar day. RFC3339 values are used as exact boundaries.
+Both report modes accept `DD-MM-YYYY`, `YYYY-MM-DD`, or RFC3339 timestamps.
+Date-only values are interpreted in UTC: `start` begins at midnight and `end`
+includes the entire given calendar day. RFC3339 values are used as exact
+boundaries. `--month` cannot be combined with `--start` or `--end`.
 Endpoint paths and query tokens are omitted from the table; for example,
 `wss://spectrum-03.simplystaking.xyz/...` is shown as
 `wss://spectrum-03.simplystaking.xyz`.
@@ -383,6 +394,7 @@ scrape_configs:
     static_configs:
       - targets: ["mon-eu-central.rpc-providers.net:80"]
       - targets: ["mon-us-east.rpc-providers.net:80"]
+      - targets: ["mon-ap-southeast.rpc-providers.net:80"]
 ```
 
 Example queries:
