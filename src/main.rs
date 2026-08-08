@@ -1348,7 +1348,10 @@ async fn check_endpoint_ws(
         }
     };
 
-    let get_block_secs = {
+    // A single chain_getBlock(latest) gives us both the full-block RPC latency
+    // AND the current block height (chain_getBlock returns block.header.number),
+    // so there is no need for a separate chain_getHeader round trip.
+    let (get_block_secs, block_height) = {
         let id = next_id;
         next_id += 1;
         match timed_rpc_over(
@@ -1360,52 +1363,22 @@ async fn check_endpoint_ws(
         )
         .await
         {
-            Ok((secs, value)) if block_response_height(&value).is_some() => Some(secs),
-            Ok((_, value)) => {
-                errors.push(CheckError {
-                    kind: "getblock",
-                    message: format!("unexpected latest block response: {value}"),
-                });
-                None
-            }
-            Err(err) => {
-                errors.push(CheckError {
-                    kind: "getblock",
-                    message: err.to_string(),
-                });
-                None
-            }
-        }
-    };
-
-    let block_height = {
-        let id = next_id;
-        next_id += 1;
-        match timed_rpc_over(
-            &mut socket,
-            "chain_getHeader",
-            json!([]),
-            id,
-            Duration::from_secs(timeouts.block_height_secs),
-        )
-        .await
-        {
-            Ok((_, value)) => match latest_block_height(&value) {
-                Some(height) => Some(height),
+            Ok((secs, value)) => match block_response_height(&value) {
+                Some(height) => (Some(secs), Some(height)),
                 None => {
                     errors.push(CheckError {
-                        kind: "height",
-                        message: format!("unexpected latest header response: {value}"),
+                        kind: "getblock",
+                        message: format!("unexpected latest block response (no height): {value}"),
                     });
-                    None
+                    (None, None)
                 }
             },
             Err(err) => {
                 errors.push(CheckError {
-                    kind: "height",
+                    kind: "getblock",
                     message: err.to_string(),
                 });
-                None
+                (None, None)
             }
         }
     };
@@ -1833,7 +1806,9 @@ async fn check_endpoint_http(
         }
     };
 
-    let get_block_secs = {
+    // Single chain_getBlock(latest) -> latency + height (header.number),
+    // no separate chain_getHeader round trip needed.
+    let (get_block_secs, block_height) = {
         let id = next_id;
         next_id += 1;
         match timed_rpc_http(
@@ -1846,53 +1821,22 @@ async fn check_endpoint_http(
         )
         .await
         {
-            Ok((secs, value)) if block_response_height(&value).is_some() => Some(secs),
-            Ok((_, value)) => {
-                errors.push(CheckError {
-                    kind: "getblock",
-                    message: format!("unexpected latest block response: {value}"),
-                });
-                None
-            }
-            Err(err) => {
-                errors.push(CheckError {
-                    kind: "getblock",
-                    message: err.to_string(),
-                });
-                None
-            }
-        }
-    };
-
-    let block_height = {
-        let id = next_id;
-        next_id += 1;
-        match timed_rpc_http(
-            &client,
-            &endpoint.url,
-            "chain_getHeader",
-            json!([]),
-            id,
-            Duration::from_secs(timeouts.block_height_secs),
-        )
-        .await
-        {
-            Ok((_, value)) => match latest_block_height(&value) {
-                Some(height) => Some(height),
+            Ok((secs, value)) => match block_response_height(&value) {
+                Some(height) => (Some(secs), Some(height)),
                 None => {
                     errors.push(CheckError {
-                        kind: "height",
-                        message: format!("unexpected latest header response: {value}"),
+                        kind: "getblock",
+                        message: format!("unexpected latest block response (no height): {value}"),
                     });
-                    None
+                    (None, None)
                 }
             },
             Err(err) => {
                 errors.push(CheckError {
-                    kind: "height",
+                    kind: "getblock",
                     message: err.to_string(),
                 });
-                None
+                (None, None)
             }
         }
     };
@@ -2168,6 +2112,7 @@ fn block_response_height(value: &Value) -> Option<u64> {
         .and_then(parse_hex_u64)
 }
 
+#[allow(dead_code)]
 fn latest_block_height(value: &Value) -> Option<u64> {
     value
         .pointer("/number")
