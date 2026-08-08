@@ -204,3 +204,175 @@ provider = "gatotech"
 # network = "polkadot-assethub-eth"
 # zone = "eu-central"
 # provider = "Gatotech"
+
+
+# HTTP JSON-RPC (https) transport entries for the same endpoints above.
+# Measured alongside websocket: rpc_connect/rpc_getblock/rpc_getblockzero/etc.
+# come from both transports; the ``transport`` label distinguishes them.
+[[endpoints]]
+url = "https://asset-hub-polkadot-rpc.n.dwellir.com"
+network = "polkadot-assethub"
+zone = "eu-central"
+transport = "http"
+provider = "Dwellir"
+
+[[endpoints]]
+url = "https://rpc-polkadot.helixstreet.io"
+network = "polkadot"
+zone = "eu-central"
+transport = "http"
+provider = "Helixstreet"
+
+[[endpoints]]
+url = "https://rpc-people-polkadot.helixstreet.io"
+network = "polkadot-people"
+zone = "eu-central"
+transport = "http"
+provider = "Helixstreet"
+
+[[endpoints]]
+url = "https://rpc-asset-hub-polkadot.helixstreet.io"
+network = "polkadot-assethub"
+zone = "eu-central"
+transport = "http"
+provider = "Helixstreet"
+
+[[endpoints]]
+url = "https://rpc-bulletin.luckyfriday.io"
+network = "polkadot-bulletin"
+zone = "us-east"
+transport = "http"
+provider = "GlobalStake"
+
+[[endpoints]]
+url = "https://statemint.api.onfinality.io/public"
+network = "polkadot-assethub"
+zone = "us-east"
+transport = "http"
+provider = "onfinality"
+
+[[endpoints]]
+url = "https://rpc-asset-hub-polkadot.stakeworld.io"
+network = "polkadot-assethub"
+zone = "eu-central"
+transport = "http"
+provider = "stakeworld"
+
+[[endpoints]]
+url = "https://rpc-bridge-hub-polkadot.stakeworld.io"
+network = "polkadot-bridgehub"
+zone = "eu-central"
+transport = "http"
+provider = "stakeworld"
+
+[[endpoints]]
+url = "https://rpc-people-polkadot.stakeworld.io"
+network = "polkadot-people"
+zone = "eu-central"
+transport = "http"
+provider = "stakeworld"
+
+[[endpoints]]
+url = "https://rpc-kusama.helixstreet.io"
+network = "kusama"
+zone = "eu-central"
+transport = "http"
+provider = "Helixstreet"
+
+[[endpoints]]
+url = "https://polkadot-mainnet.linkpool.com"
+network = "polkadot"
+zone = "eu-central"
+transport = "http"
+provider = "LinkPool"
+
+[[endpoints]]
+url = "https://rpc.interweb-it.com/polkadot"
+network = "polkadot"
+zone = "eu-central"
+transport = "http"
+provider = "interweb"
+
+[[endpoints]]
+url = "https://bridge-hub-polkadot.rotko.net"
+network = "polkadot-bridgehub"
+zone = "ap-southeast"
+transport = "http"
+provider = "Rotko"
+
+[[endpoints]]
+url = "https://collectives-polkadot.rotko.net"
+network = "polkadot-collectives"
+zone = "ap-southeast"
+transport = "http"
+provider = "Rotko"
+
+[[endpoints]]
+url = "https://coretime-polkadot.rotko.net"
+network = "polkadot-coretime"
+zone = "ap-southeast"
+transport = "http"
+provider = "Rotko"
+
+[[endpoints]]
+url = "https://people-polkadot.rotko.net"
+network = "polkadot-people"
+zone = "ap-southeast"
+transport = "http"
+provider = "Rotko"
+
+[[endpoints]]
+url = "https://asset-hub-kusama.rotko.net"
+network = "kusama-assethub"
+zone = "ap-southeast"
+transport = "http"
+provider = "Rotko"
+
+[[endpoints]]
+url = "https://bridge-hub-kusama.rotko.net"
+network = "kusama-bridgehub"
+zone = "ap-southeast"
+transport = "http"
+provider = "Rotko"
+
+[[endpoints]]
+url = "https://coretime-kusama.rotko.net"
+network = "kusama-coretime"
+zone = "ap-southeast"
+transport = "http"
+provider = "Rotko"
+
+[[endpoints]]
+url = "https://encointer-kusama.rotko.net"
+network = "kusama-encointer"
+zone = "ap-southeast"
+transport = "http"
+provider = "Rotko"
+
+[[endpoints]]
+url = "https://people-kusama.rotko.net"
+network = "kusama-people"
+zone = "ap-southeast"
+transport = "http"
+provider = "Rotko"
+
+[[endpoints]]
+url = "https://polkadot.gatotech.network"
+network = "polkadot"
+zone = "eu-central"
+transport = "http"
+provider = "gatotech"
+
+[[endpoints]]
+url = "https://kusama.gatotech.network"
+network = "kusama"
+zone = "eu-central"
+transport = "http"
+provider = "gatotech"
+
+[[endpoints]]
+url = "https://asset-hub-polkadot.gatotech.network"
+network = "polkadot-assethub"
+zone = "eu-central"
+transport = "http"
+provider = "gatotech"
