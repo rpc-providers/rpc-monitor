@@ -1,0 +1,3 @@
+[build]
+# reqwest's HTTP/3 (QUIC) support is gated behind the `reqwest_unstable` cfg.
+rustflags = ["--cfg", "reqwest_unstable"]
