@@ -17,9 +17,14 @@ use serde_json::{json, Value};
 use tokio::net::{lookup_host, TcpStream};
 use tokio::time::timeout;
 use tokio_rustls::{rustls::RootCertStore, TlsConnector};
-use tokio_tungstenite::{client_async, connect_async, tungstenite::Message};
+use tokio_tungstenite::{
+    client_async, connect_async, tungstenite::Message, MaybeTlsStream, WebSocketStream,
+};
 use tracing::{error, info, warn};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
+
+/// Reused websocket connection for the per-endpoint JSON-RPC checks.
+type WsStream = WebSocketStream<MaybeTlsStream<TcpStream>>;
 
 #[derive(Parser, Debug)]
 #[command(
@@ -1170,43 +1175,84 @@ async fn check_endpoint(
     let mut errors = Vec::new();
     let mut skipped = Vec::new();
 
-    let connect_secs =
-        match timed_connect(&endpoint.url, Duration::from_secs(timeouts.connect_secs)).await {
-            Ok(secs) => Some(secs),
+    // Open one websocket connection per endpoint and reuse it for every
+    // JSON-RPC call in this check. Per-call timings (rpc_getblock,
+    // rpc_getblockzero, ...) then measure RPC latency instead of the
+    // TCP+TLS+websocket handshake, which is reported once as rpc_connect.
+    let (connect_secs, mut socket) =
+        match connect_ws(&endpoint.url, Duration::from_secs(timeouts.connect_secs)).await {
+            Ok((secs, socket)) => (Some(secs), socket),
             Err(err) => {
+                let message = err.to_string();
                 errors.push(CheckError {
                     kind: "connect",
-                    message: err.to_string(),
+                    message: message.clone(),
                 });
-                None
+                if zero_hashes.contains_key(&endpoint.network) {
+                    errors.push(CheckError {
+                        kind: "blockzero",
+                        message: message.clone(),
+                    });
+                } else {
+                    skipped.push("blockzero");
+                }
+                errors.push(CheckError {
+                    kind: "getblock",
+                    message: message.clone(),
+                });
+                errors.push(CheckError {
+                    kind: "height",
+                    message: message.clone(),
+                });
+                errors.push(CheckError {
+                    kind: "version",
+                    message,
+                });
+                return EndpointResult {
+                    endpoint,
+                    block_zero_secs: None,
+                    get_block_secs: None,
+                    block_height: None,
+                    connect_secs: None,
+                    version: None,
+                    errors,
+                    skipped,
+                };
             }
         };
 
+    let mut next_id: u64 = 1;
+
     let block_zero_secs = match zero_hashes.get(&endpoint.network) {
-        Some(hash) => match timed_rpc_call(
-            &endpoint.url,
-            "chain_getBlock",
-            json!([hash]),
-            Duration::from_secs(timeouts.block_zero_secs),
-        )
-        .await
-        {
-            Ok((secs, value)) if is_block_zero_response(&value) => Some(secs),
-            Ok((_, value)) => {
-                errors.push(CheckError {
-                    kind: "blockzero",
-                    message: format!("unexpected block response: {value}"),
-                });
-                None
+        Some(hash) => {
+            let id = next_id;
+            next_id += 1;
+            match timed_rpc_over(
+                &mut socket,
+                "chain_getBlock",
+                json!([hash]),
+                id,
+                Duration::from_secs(timeouts.block_zero_secs),
+            )
+            .await
+            {
+                Ok((secs, value)) if is_block_zero_response(&value) => Some(secs),
+                Ok((_, value)) => {
+                    errors.push(CheckError {
+                        kind: "blockzero",
+                        message: format!("unexpected block response: {value}"),
+                    });
+                    None
+                }
+                Err(err) => {
+                    errors.push(CheckError {
+                        kind: "blockzero",
+                        message: err.to_string(),
+                    });
+                    None
+                }
             }
-            Err(err) => {
-                errors.push(CheckError {
-                    kind: "blockzero",
-                    message: err.to_string(),
-                });
-                None
-            }
-        },
+        }
         // Some networks, such as bulletin chains, are not expected to be archive
         // endpoints. If no zero hash is configured, skip this check and emit
         // rpc_error{error="blockzero"} = 0 so dashboards treat it as healthy.
@@ -1216,84 +1262,100 @@ async fn check_endpoint(
         }
     };
 
-    let get_block_secs = match timed_rpc_call(
-        &endpoint.url,
-        "chain_getBlock",
-        json!([]),
-        Duration::from_secs(timeouts.get_block_secs),
-    )
-    .await
-    {
-        Ok((secs, value)) if block_response_height(&value).is_some() => Some(secs),
-        Ok((_, value)) => {
-            errors.push(CheckError {
-                kind: "getblock",
-                message: format!("unexpected latest block response: {value}"),
-            });
-            None
-        }
-        Err(err) => {
-            errors.push(CheckError {
-                kind: "getblock",
-                message: err.to_string(),
-            });
-            None
+    let get_block_secs = {
+        let id = next_id;
+        next_id += 1;
+        match timed_rpc_over(
+            &mut socket,
+            "chain_getBlock",
+            json!([]),
+            id,
+            Duration::from_secs(timeouts.get_block_secs),
+        )
+        .await
+        {
+            Ok((secs, value)) if block_response_height(&value).is_some() => Some(secs),
+            Ok((_, value)) => {
+                errors.push(CheckError {
+                    kind: "getblock",
+                    message: format!("unexpected latest block response: {value}"),
+                });
+                None
+            }
+            Err(err) => {
+                errors.push(CheckError {
+                    kind: "getblock",
+                    message: err.to_string(),
+                });
+                None
+            }
         }
     };
 
-    let block_height = match timed_rpc_call(
-        &endpoint.url,
-        "chain_getHeader",
-        json!([]),
-        Duration::from_secs(timeouts.block_height_secs),
-    )
-    .await
-    {
-        Ok((_, value)) => match latest_block_height(&value) {
-            Some(height) => Some(height),
-            None => {
+    let block_height = {
+        let id = next_id;
+        next_id += 1;
+        match timed_rpc_over(
+            &mut socket,
+            "chain_getHeader",
+            json!([]),
+            id,
+            Duration::from_secs(timeouts.block_height_secs),
+        )
+        .await
+        {
+            Ok((_, value)) => match latest_block_height(&value) {
+                Some(height) => Some(height),
+                None => {
+                    errors.push(CheckError {
+                        kind: "height",
+                        message: format!("unexpected latest header response: {value}"),
+                    });
+                    None
+                }
+            },
+            Err(err) => {
                 errors.push(CheckError {
                     kind: "height",
-                    message: format!("unexpected latest header response: {value}"),
+                    message: err.to_string(),
                 });
                 None
             }
-        },
-        Err(err) => {
-            errors.push(CheckError {
-                kind: "height",
-                message: err.to_string(),
-            });
-            None
         }
     };
 
-    let version = match timed_rpc_call(
-        &endpoint.url,
-        "system_version",
-        json!([]),
-        Duration::from_secs(timeouts.version_secs),
-    )
-    .await
-    {
-        Ok((_, value)) => match value.as_str() {
-            Some(version) if !version.trim().is_empty() => Some(version.to_owned()),
-            _ => {
+    let version = {
+        let id = next_id;
+        match timed_rpc_over(
+            &mut socket,
+            "system_version",
+            json!([]),
+            id,
+            Duration::from_secs(timeouts.version_secs),
+        )
+        .await
+        {
+            Ok((_, value)) => match value.as_str() {
+                Some(version) if !version.trim().is_empty() => Some(version.to_owned()),
+                _ => {
+                    errors.push(CheckError {
+                        kind: "version",
+                        message: format!("unexpected version response: {value}"),
+                    });
+                    None
+                }
+            },
+            Err(err) => {
                 errors.push(CheckError {
                     kind: "version",
-                    message: format!("unexpected version response: {value}"),
+                    message: err.to_string(),
                 });
                 None
             }
-        },
-        Err(err) => {
-            errors.push(CheckError {
-                kind: "version",
-                message: err.to_string(),
-            });
-            None
         }
     };
+
+    let _ = socket.close(None).await;
 
     EndpointResult {
         endpoint,
@@ -1307,38 +1369,38 @@ async fn check_endpoint(
     }
 }
 
-async fn timed_connect(url: &str, deadline: Duration) -> Result<f64> {
+async fn connect_ws(url: &str, deadline: Duration) -> Result<(f64, WsStream)> {
     let started = Instant::now();
     let connect = timeout(deadline, connect_async(url))
         .await
         .with_context(|| format!("timeout after {}s", deadline.as_secs()))?;
-    let (mut socket, _) = connect.with_context(|| format!("websocket connect failed for {url}"))?;
-    let elapsed = started.elapsed().as_secs_f64();
-    let _ = socket.close(None).await;
-    Ok(elapsed)
+    let (socket, _) = connect.with_context(|| format!("websocket connect failed for {url}"))?;
+    Ok((started.elapsed().as_secs_f64(), socket))
 }
 
-async fn timed_rpc_call(
-    url: &str,
+async fn timed_rpc_over(
+    socket: &mut WsStream,
     method: &str,
     params: Value,
+    id: u64,
     deadline: Duration,
 ) -> Result<(f64, Value)> {
     let started = Instant::now();
-    let response = timeout(deadline, rpc_call(url, method, params))
+    let response = timeout(deadline, rpc_call_over(socket, method, params, id))
         .await
         .with_context(|| format!("{method} timeout after {}s", deadline.as_secs()))??;
     Ok((started.elapsed().as_secs_f64(), response))
 }
 
-async fn rpc_call(url: &str, method: &str, params: Value) -> Result<Value> {
-    let (mut socket, _) = connect_async(url)
-        .await
-        .with_context(|| format!("websocket connect failed for {url}"))?;
-
+async fn rpc_call_over(
+    socket: &mut WsStream,
+    method: &str,
+    params: Value,
+    id: u64,
+) -> Result<Value> {
     let request = json!({
         "jsonrpc": "2.0",
-        "id": 1,
+        "id": id,
         "method": method,
         "params": params,
     });
@@ -1353,7 +1415,7 @@ async fn rpc_call(url: &str, method: &str, params: Value) -> Result<Value> {
             Message::Text(text) => {
                 let value: Value = serde_json::from_str(&text)
                     .with_context(|| format!("invalid JSON-RPC response for {method}: {text}"))?;
-                if value.get("id") != Some(&json!(1)) {
+                if value.get("id") != Some(&json!(id)) {
                     continue;
                 }
                 if let Some(error) = value.get("error") {
