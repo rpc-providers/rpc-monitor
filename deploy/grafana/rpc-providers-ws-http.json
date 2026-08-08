@@ -1,0 +1,3184 @@
+{
+ "dashboard": {
+  "annotations": {
+   "list": [
+    {
+     "builtIn": 1,
+     "datasource": {
+      "type": "grafana",
+      "uid": "-- Grafana --"
+     },
+     "enable": true,
+     "hide": true,
+     "iconColor": "rgba(0, 211, 255, 1)",
+     "name": "Annotations & Alerts",
+     "type": "dashboard"
+    }
+   ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": 1,
+  "liveNow": false,
+  "panels": [
+   {
+    "collapsed": false,
+    "gridPos": {
+     "h": 1,
+     "w": 24,
+     "x": 0,
+     "y": 0
+    },
+    "id": 26,
+    "title": "Alerts",
+    "type": "row"
+   },
+   {
+    "gridPos": {
+     "h": 4,
+     "w": 24,
+     "x": 0,
+     "y": 1
+    },
+    "id": 10,
+    "options": {
+     "alertInstanceLabelFilter": "",
+     "alertName": "",
+     "dashboardAlerts": false,
+     "datasource": "-- Grafana --",
+     "folder": {
+      "title": "rpc-alerts",
+      "uid": "bdteg0bw7b400c"
+     },
+     "groupBy": [
+      "wss",
+      "network",
+      "zone"
+     ],
+     "groupMode": "custom",
+     "maxItems": 20,
+     "showInactiveAlerts": false,
+     "sortOrder": 1,
+     "statColorMode": "none",
+     "statThresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "green",
+        "value": 0
+       },
+       {
+        "color": "red",
+        "value": 80
+       }
+      ]
+     },
+     "statValueMappings": [],
+     "stateFilter": {
+      "error": true,
+      "firing": true,
+      "noData": false,
+      "normal": false,
+      "pending": false,
+      "recovering": true
+     },
+     "viewMode": "list"
+    },
+    "pluginVersion": "13.1.0",
+    "targets": [],
+    "title": "Alerts (all zones)",
+    "type": "alertlist"
+   },
+   {
+    "datasource": {
+     "type": "prometheus",
+     "uid": "${DS_PROMETHEUS}"
+    },
+    "fieldConfig": {
+     "defaults": {
+      "color": {
+       "mode": "palette-classic"
+      },
+      "custom": {
+       "axisBorderShow": false,
+       "axisCenteredZero": false,
+       "axisColorMode": "text",
+       "axisGridShow": true,
+       "axisLabel": "",
+       "axisPlacement": "auto",
+       "axisSoftMax": 1,
+       "barAlignment": 0,
+       "barWidthFactor": 0.6,
+       "drawStyle": "points",
+       "fillOpacity": 0,
+       "gradientMode": "none",
+       "hideFrom": {
+        "legend": false,
+        "tooltip": false,
+        "viz": false
+       },
+       "insertNulls": false,
+       "lineInterpolation": "linear",
+       "lineWidth": 1,
+       "pointSize": 8,
+       "scaleDistribution": {
+        "type": "linear"
+       },
+       "showPoints": "auto",
+       "showValues": false,
+       "spanNulls": false,
+       "stacking": {
+        "group": "A",
+        "mode": "none"
+       },
+       "thresholdsStyle": {
+        "mode": "off"
+       }
+      },
+      "decimals": 0,
+      "max": 1,
+      "min": 0.5,
+      "thresholds": {
+       "mode": "absolute",
+       "steps": [
+        {
+         "color": "green",
+         "value": 0
+        },
+        {
+         "color": "red",
+         "value": 80
+        }
+       ]
+      }
+     },
+     "overrides": [
+      {
+       "matcher": {
+        "id": "byValue",
+        "options": {
+         "op": "gte",
+         "reducer": "allIsZero",
+         "value": 0
+        }
+       },
+       "properties": [
+        {
+         "id": "custom.hideFrom",
+         "value": {
+          "legend": true,
+          "tooltip": true,
+          "viz": true
+         }
+        }
+       ]
+      }
+     ]
+    },
+    "gridPos": {
+     "h": 4,
+     "w": 24,
+     "x": 0,
+     "y": 5
+    },
+    "id": 16,
+    "options": {
+     "annotations": {
+      "clustering": -1,
+      "multiLane": false
+     },
+     "legend": {
+      "calcs": [],
+      "displayMode": "list",
+      "enableFacetedFilter": false,
+      "overflow": "ellipsis",
+      "placement": "bottom",
+      "showLegend": true
+     },
+     "tooltip": {
+      "hideZeros": false,
+      "mode": "single",
+      "sort": "none"
+     }
+    },
+    "pluginVersion": "13.1.0",
+    "targets": [
+     {
+      "datasource": {
+       "type": "prometheus",
+       "uid": "${DS_PROMETHEUS}"
+      },
+      "editorMode": "code",
+      "exemplar": false,
+      "expr": "last_over_time(rpc_error{error=\"connect\",zone=~\"$zone\",network=~\"$network\",wss=~\"$wss\",transport=~\"$transport\"}[$__interval])",
+      "format": "time_series",
+      "instant": true,
+      "legendFormat": "{{wss}} - {{error}}",
+      "range": true,
+      "refId": "A"
+     },
+     {
+      "datasource": {
+       "type": "prometheus",
+       "uid": "${DS_PROMETHEUS}"
+      },
+      "editorMode": "code",
+      "expr": "last_over_time(rpc_error{error=\"blockzero\",zone=~\"$zone\",network=~\"$network\",wss=~\"$wss\",transport=~\"$transport\"}[$__interval]) == 1",
+      "instant": false,
+      "legendFormat": "{{wss}} - {{error}}",
+      "range": true,
+      "refId": "B"
+     }
+    ],
+    "title": "Errors",
+    "type": "timeseries"
+   },
+   {
+    "datasource": {
+     "type": "loki",
+     "uid": "${DS_LOKI}"
+    },
+    "gridPos": {
+     "h": 4,
+     "w": 24,
+     "x": 0,
+     "y": 9
+    },
+    "id": 25,
+    "options": {
+     "dedupStrategy": "none",
+     "enableInfiniteScrolling": false,
+     "enableLogDetails": true,
+     "prettifyLogMessage": false,
+     "showCommonLabels": false,
+     "showControls": false,
+     "showFieldSelector": false,
+     "showLabels": false,
+     "showLevel": true,
+     "showTime": false,
+     "sortOrder": "Descending",
+     "timestampResolution": "ms",
+     "unwrappedColumns": false,
+     "wrapLogMessage": false
+    },
+    "pluginVersion": "13.1.0",
+    "targets": [
+     {
+      "datasource": {
+       "type": "loki",
+       "uid": "${DS_LOKI}"
+      },
+      "direction": "backward",
+      "editorMode": "code",
+      "expr": "{job=\"rpc-monitor\"}",
+      "queryType": "range",
+      "refId": "A"
+     }
+    ],
+    "title": "Logs",
+    "type": "logs"
+   },
+   {
+    "collapsed": false,
+    "gridPos": {
+     "h": 1,
+     "w": 24,
+     "x": 0,
+     "y": 13
+    },
+    "id": 27,
+    "title": "RPC monitor dashboard",
+    "type": "row"
+   },
+   {
+    "datasource": {
+     "type": "prometheus",
+     "uid": "${DS_PROMETHEUS}"
+    },
+    "fieldConfig": {
+     "defaults": {
+      "color": {
+       "mode": "thresholds"
+      },
+      "custom": {
+       "align": "auto",
+       "cellOptions": {
+        "mode": "gradient",
+        "type": "color-background"
+       },
+       "filterable": true,
+       "footer": {
+        "reducers": []
+       },
+       "inspect": false
+      },
+      "noValue": "ERROR",
+      "thresholds": {
+       "mode": "absolute",
+       "steps": [
+        {
+         "color": "green",
+         "value": 0
+        }
+       ]
+      }
+     },
+     "overrides": [
+      {
+       "matcher": {
+        "id": "byName",
+        "options": "wss"
+       },
+       "properties": [
+        {
+         "id": "custom.width",
+         "value": 331
+        }
+       ]
+      },
+      {
+       "matcher": {
+        "id": "byName",
+        "options": "Block 0"
+       },
+       "properties": [
+        {
+         "id": "custom.width",
+         "value": 118
+        },
+        {
+         "id": "mappings",
+         "value": [
+          {
+           "options": {
+            "from": 6,
+            "result": {
+             "color": "orange",
+             "index": 0
+            },
+            "to": 9
+           },
+           "type": "range"
+          },
+          {
+           "options": {
+            "from": 9,
+            "result": {
+             "color": "red",
+             "index": 1
+            },
+            "to": 200
+           },
+           "type": "range"
+          },
+          {
+           "options": {
+            "from": 0,
+            "result": {
+             "color": "green",
+             "index": 2
+            },
+            "to": 6
+           },
+           "type": "range"
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "matcher": {
+        "id": "byName",
+        "options": "version"
+       },
+       "properties": [
+        {
+         "id": "custom.width",
+         "value": 142
+        }
+       ]
+      },
+      {
+       "matcher": {
+        "id": "byName",
+        "options": "Connect time"
+       },
+       "properties": [
+        {
+         "id": "custom.width",
+         "value": 119
+        },
+        {
+         "id": "mappings",
+         "value": [
+          {
+           "options": {
+            "from": 0,
+            "result": {
+             "color": "green",
+             "index": 0
+            },
+            "to": 0.5
+           },
+           "type": "range"
+          },
+          {
+           "options": {
+            "from": 0.5,
+            "result": {
+             "color": "orange",
+             "index": 1
+            },
+            "to": 2
+           },
+           "type": "range"
+          },
+          {
+           "options": {
+            "from": 2,
+            "result": {
+             "color": "red",
+             "index": 2
+            },
+            "to": 10
+           },
+           "type": "range"
+          }
+         ]
+        },
+        {
+         "id": "decimals",
+         "value": 2
+        }
+       ]
+      },
+      {
+       "matcher": {
+        "id": "byName",
+        "options": "Time"
+       },
+       "properties": [
+        {
+         "id": "custom.width",
+         "value": 199
+        }
+       ]
+      },
+      {
+       "matcher": {
+        "id": "byName",
+        "options": "Network"
+       },
+       "properties": [
+        {
+         "id": "custom.width",
+         "value": 147
+        }
+       ]
+      },
+      {
+       "matcher": {
+        "id": "byName",
+        "options": "Endpoint"
+       },
+       "properties": [
+        {
+         "id": "custom.width",
+         "value": 345
+        }
+       ]
+      },
+      {
+       "matcher": {
+        "id": "byName",
+        "options": "Version"
+       },
+       "properties": [
+        {
+         "id": "custom.width",
+         "value": 92
+        }
+       ]
+      },
+      {
+       "matcher": {
+        "id": "byName",
+        "options": "Zone"
+       },
+       "properties": [
+        {
+         "id": "custom.width",
+         "value": 89
+        }
+       ]
+      },
+      {
+       "matcher": {
+        "id": "byName",
+        "options": "Last check"
+       },
+       "properties": [
+        {
+         "id": "custom.width",
+         "value": 132
+        }
+       ]
+      },
+      {
+       "matcher": {
+        "id": "byName",
+        "options": "Connect error"
+       },
+       "properties": [
+        {
+         "id": "custom.width",
+         "value": 161
+        }
+       ]
+      },
+      {
+       "matcher": {
+        "id": "byName",
+        "options": "Connect"
+       },
+       "properties": [
+        {
+         "id": "custom.width",
+         "value": 87
+        },
+        {
+         "id": "mappings",
+         "value": [
+          {
+           "options": {
+            "0": {
+             "index": 0,
+             "text": "OK"
+            },
+            "1": {
+             "color": "red",
+             "index": 1,
+             "text": "ERROR"
+            },
+            "2": {
+             "index": 2,
+             "text": "NVT"
+            }
+           },
+           "type": "value"
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "matcher": {
+        "id": "byName",
+        "options": "Block 0"
+       },
+       "properties": [
+        {
+         "id": "custom.width",
+         "value": 84
+        },
+        {
+         "id": "mappings",
+         "value": [
+          {
+           "options": {
+            "0": {
+             "index": 0,
+             "text": "OK"
+            },
+            "1": {
+             "color": "red",
+             "index": 1,
+             "text": "ERROR"
+            },
+            "2": {
+             "index": 2,
+             "text": "N/A"
+            }
+           },
+           "type": "value"
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "matcher": {
+        "id": "byName",
+        "options": "Uptime"
+       },
+       "properties": [
+        {
+         "id": "custom.width",
+         "value": 85
+        },
+        {
+         "id": "decimals",
+         "value": 2
+        },
+        {
+         "id": "unit",
+         "value": "percent"
+        }
+       ]
+      },
+      {
+       "matcher": {
+        "id": "byName",
+        "options": "Uptime 30d"
+       },
+       "properties": [
+        {
+         "id": "custom.width",
+         "value": 116
+        },
+        {
+         "id": "decimals",
+         "value": 2
+        },
+        {
+         "id": "unit",
+         "value": "percent"
+        }
+       ]
+      },
+      {
+       "matcher": {
+        "id": "byName",
+        "options": "Uptime 10d"
+       },
+       "properties": [
+        {
+         "id": "custom.width",
+         "value": 116
+        },
+        {
+         "id": "unit",
+         "value": "percent"
+        },
+        {
+         "id": "decimals",
+         "value": 2
+        }
+       ]
+      },
+      {
+       "matcher": {
+        "id": "byName",
+        "options": "AVG",
+        "scope": "series"
+       },
+       "properties": [
+        {
+         "id": "custom.width",
+         "value": 154
+        },
+        {
+         "id": "decimals",
+         "value": 2
+        }
+       ]
+      },
+      {
+       "matcher": {
+        "id": "byName",
+        "options": "Block 0 time"
+       },
+       "properties": [
+        {
+         "id": "custom.width",
+         "value": 84
+        }
+       ]
+      },
+      {
+       "matcher": {
+        "id": "byName",
+        "options": "Median",
+        "scope": "series"
+       },
+       "properties": [
+        {
+         "id": "custom.width",
+         "value": 88
+        },
+        {
+         "id": "decimals",
+         "value": 2
+        }
+       ]
+      },
+      {
+       "matcher": {
+        "id": "byName",
+        "options": "P95"
+       },
+       "properties": [
+        {
+         "id": "custom.width",
+         "value": 63
+        },
+        {
+         "id": "decimals",
+         "value": 2
+        }
+       ]
+      },
+      {
+       "matcher": {
+        "id": "byName",
+        "options": "P99"
+       },
+       "properties": [
+        {
+         "id": "custom.width",
+         "value": 62
+        },
+        {
+         "id": "decimals",
+         "value": 2
+        }
+       ]
+      },
+      {
+       "matcher": {
+        "id": "byName",
+        "options": "30d AVG"
+       },
+       "properties": [
+        {
+         "id": "custom.width",
+         "value": 99
+        },
+        {
+         "id": "decimals",
+         "value": 2
+        }
+       ]
+      },
+      {
+       "matcher": {
+        "id": "byNames",
+        "options": {
+         "mode": "include",
+         "names": [
+          "Value #D",
+          "Value #B"
+         ]
+        }
+       },
+       "properties": [
+        {
+         "id": "custom.footer.reducers",
+         "value": [
+          "mean"
+         ]
+        }
+       ]
+      },
+      {
+       "matcher": {
+        "id": "byName",
+        "options": "AVG"
+       },
+       "properties": [
+        {
+         "id": "custom.width",
+         "value": 83
+        }
+       ]
+      },
+      {
+       "matcher": {
+        "id": "byName",
+        "options": "Median"
+       },
+       "properties": [
+        {
+         "id": "custom.width",
+         "value": 94
+        }
+       ]
+      },
+      {
+       "matcher": {
+        "id": "byName",
+        "options": "Drift"
+       },
+       "properties": [
+        {
+         "id": "custom.width",
+         "value": 63
+        }
+       ]
+      }
+     ]
+    },
+    "gridPos": {
+     "h": 28,
+     "w": 24,
+     "x": 0,
+     "y": 14
+    },
+    "id": 4,
+    "options": {
+     "cellHeight": "sm",
+     "enablePagination": false,
+     "showHeader": true,
+     "sortBy": [
+      {
+       "desc": true,
+       "displayName": "Endpoint"
+      }
+     ]
+    },
+    "pluginVersion": "13.1.0",
+    "targets": [
+     {
+      "datasource": {
+       "type": "prometheus",
+       "uid": "${DS_PROMETHEUS}"
+      },
+      "editorMode": "code",
+      "exemplar": false,
+      "expr": "rpc_getblockzero{wss=~\"$wss\",zone=~\"$zone\",network=~\"$network\",transport=~\"$transport\"}[30m]",
+      "format": "table",
+      "instant": true,
+      "interval": "10m",
+      "legendFormat": "",
+      "range": false,
+      "refId": "B"
+     },
+     {
+      "datasource": {
+       "type": "prometheus",
+       "uid": "${DS_PROMETHEUS}"
+      },
+      "editorMode": "code",
+      "exemplar": false,
+      "expr": "rpc_version{wss=~\"$wss\",zone=~\"$zone\",network=~\"$network\",transport=~\"$transport\"}[30m]",
+      "format": "table",
+      "instant": true,
+      "interval": "5m",
+      "legendFormat": "",
+      "range": false,
+      "refId": "C"
+     },
+     {
+      "datasource": {
+       "type": "prometheus",
+       "uid": "${DS_PROMETHEUS}"
+      },
+      "editorMode": "code",
+      "exemplar": false,
+      "expr": "rpc_connect{wss=~\"$wss\",zone=~\"$zone\",network=~\"$network\",transport=~\"$transport\"}[30m]",
+      "format": "table",
+      "instant": true,
+      "interval": "10m",
+      "legendFormat": "",
+      "range": false,
+      "refId": "D"
+     },
+     {
+      "datasource": {
+       "type": "prometheus",
+       "uid": "${DS_PROMETHEUS}"
+      },
+      "editorMode": "code",
+      "exemplar": false,
+      "expr": "rpc_error{wss=~\"$wss\",zone=~\"$zone\",network=~\"$network\",error=\"connect\",transport=~\"$transport\"}[30m]",
+      "format": "table",
+      "instant": true,
+      "interval": "10m",
+      "legendFormat": "__auto",
+      "range": false,
+      "refId": "A"
+     },
+     {
+      "datasource": {
+       "type": "prometheus",
+       "uid": "${DS_PROMETHEUS}"
+      },
+      "editorMode": "code",
+      "exemplar": false,
+      "expr": "rpc_error{wss=~\"$wss\",zone=~\"$zone\",network=~\"$network\",error=\"blockzero\",transport=~\"$transport\"}[30m]",
+      "format": "table",
+      "instant": true,
+      "interval": "10m",
+      "legendFormat": "__auto",
+      "range": false,
+      "refId": "E"
+     },
+     {
+      "datasource": {
+       "type": "prometheus",
+       "uid": "${DS_PROMETHEUS}"
+      },
+      "editorMode": "code",
+      "exemplar": false,
+      "expr": "rpc_error{wss=~\"$wss\",zone=~\"$zone\",network=~\"$network\",error=\"version\",transport=~\"$transport\"}[30m]",
+      "format": "table",
+      "instant": true,
+      "interval": "10m",
+      "legendFormat": "__auto",
+      "range": false,
+      "refId": "F"
+     },
+     {
+      "datasource": {
+       "type": "prometheus",
+       "uid": "${DS_PROMETHEUS}"
+      },
+      "editorMode": "code",
+      "exemplar": false,
+      "expr": "rpc_error{wss=~\"$wss\",zone=~\"$zone\",network=~\"$network\",error=\"code\",transport=~\"$transport\"}[30m]",
+      "format": "table",
+      "instant": true,
+      "interval": "10m",
+      "legendFormat": "__auto",
+      "range": false,
+      "refId": "G"
+     },
+     {
+      "datasource": {
+       "type": "prometheus",
+       "uid": "${DS_PROMETHEUS}"
+      },
+      "editorMode": "code",
+      "exemplar": false,
+      "expr": "(1-(sum by (wss)(sum_over_time(rpc_error{wss=~\"$wss\",zone=~\"$zone\",network=~\"$network\",error=~\"blockzero\",transport=~\"$transport\"}[30d])/2880)))*100",
+      "format": "table",
+      "instant": true,
+      "interval": "15m",
+      "legendFormat": "__auto",
+      "range": false,
+      "refId": "H"
+     },
+     {
+      "datasource": {
+       "type": "prometheus",
+       "uid": "${DS_PROMETHEUS}"
+      },
+      "editorMode": "code",
+      "exemplar": false,
+      "expr": "(1-(sum by (wss)(sum_over_time(rpc_error{wss=~\"$wss\",zone=~\"$zone\",network=~\"$network\",error=~\"blockzero\",transport=~\"$transport\"}[10d])/960)))*100",
+      "format": "table",
+      "instant": true,
+      "interval": "15m",
+      "legendFormat": "__auto",
+      "range": false,
+      "refId": "I"
+     },
+     {
+      "datasource": {
+       "type": "prometheus",
+       "uid": "${DS_PROMETHEUS}"
+      },
+      "editorMode": "code",
+      "exemplar": false,
+      "expr": "avg_over_time(rpc_connect{wss=~\"$wss\",zone=~\"$zone\",network=~\"$network\",transport=~\"$transport\"}[30d])",
+      "format": "table",
+      "instant": true,
+      "legendFormat": "__auto",
+      "range": false,
+      "refId": "J"
+     },
+     {
+      "datasource": {
+       "type": "prometheus",
+       "uid": "${DS_PROMETHEUS}"
+      },
+      "editorMode": "code",
+      "exemplar": false,
+      "expr": "quantile_over_time(0.5, rpc_connect{wss=~\"$wss\",zone=~\"$zone\",network=~\"$network\",transport=~\"$transport\"}[30d])",
+      "format": "table",
+      "instant": true,
+      "legendFormat": "__auto",
+      "range": false,
+      "refId": "K"
+     },
+     {
+      "datasource": {
+       "type": "prometheus",
+       "uid": "${DS_PROMETHEUS}"
+      },
+      "editorMode": "code",
+      "exemplar": false,
+      "expr": "quantile_over_time(0.95, rpc_connect{wss=~\"$wss\",zone=~\"$zone\",network=~\"$network\",transport=~\"$transport\"}[30d])",
+      "format": "table",
+      "instant": true,
+      "legendFormat": "__auto",
+      "range": false,
+      "refId": "L"
+     },
+     {
+      "datasource": {
+       "type": "prometheus",
+       "uid": "${DS_PROMETHEUS}"
+      },
+      "editorMode": "code",
+      "exemplar": false,
+      "expr": "quantile_over_time(0.99, rpc_connect{wss=~\"$wss\",zone=~\"$zone\",network=~\"$network\",transport=~\"$transport\"}[30d])",
+      "format": "table",
+      "instant": true,
+      "legendFormat": "__auto",
+      "range": false,
+      "refId": "M"
+     },
+     {
+      "datasource": {
+       "type": "prometheus",
+       "uid": "${DS_PROMETHEUS}"
+      },
+      "editorMode": "code",
+      "exemplar": false,
+      "expr": "rpc_blockdrift{wss=~\"$wss\",zone=~\"$zone\",network=~\"$network\",transport=~\"$transport\"}[30m]",
+      "format": "table",
+      "instant": true,
+      "interval": "10",
+      "legendFormat": "__auto",
+      "range": false,
+      "refId": "N"
+     }
+    ],
+    "title": "Times from $zone zone for $network network",
+    "transformations": [
+     {
+      "id": "joinByField",
+      "options": {
+       "byField": "wss",
+       "mode": "outer"
+      }
+     },
+     {
+      "id": "organize",
+      "options": {
+       "excludeByName": {
+        "Time 1": true,
+        "Time 10": true,
+        "Time 11": true,
+        "Time 12": true,
+        "Time 13": true,
+        "Time 14": true,
+        "Time 2": true,
+        "Time 3": true,
+        "Time 4": false,
+        "Time 5": true,
+        "Time 6": true,
+        "Time 7": true,
+        "Time 8": true,
+        "Time 9": true,
+        "Value #A": false,
+        "Value #B": true,
+        "Value #C": true,
+        "Value #F": true,
+        "Value #G": true,
+        "Value #L": false,
+        "__name__ 1": true,
+        "__name__ 2": true,
+        "__name__ 3": true,
+        "__name__ 4": true,
+        "__name__ 5": true,
+        "__name__ 6": true,
+        "__name__ 7": true,
+        "__name__ 8": true,
+        "error": false,
+        "error 1": true,
+        "error 2": true,
+        "error 3": true,
+        "error 4": true,
+        "error 5": true,
+        "error 6": true,
+        "instance 1": true,
+        "instance 10": true,
+        "instance 11": true,
+        "instance 12": true,
+        "instance 2": true,
+        "instance 3": true,
+        "instance 4": true,
+        "instance 5": true,
+        "instance 6": true,
+        "instance 7": true,
+        "instance 8": true,
+        "instance 9": true,
+        "job 1": true,
+        "job 10": true,
+        "job 11": true,
+        "job 12": true,
+        "job 2": true,
+        "job 3": true,
+        "job 4": true,
+        "job 5": true,
+        "job 6": true,
+        "job 7": true,
+        "job 8": true,
+        "job 9": true,
+        "network 1": true,
+        "network 10": true,
+        "network 11": true,
+        "network 12": true,
+        "network 2": false,
+        "network 3": true,
+        "network 4": true,
+        "network 5": true,
+        "network 6": true,
+        "network 7": true,
+        "network 8": true,
+        "network 9": true,
+        "zone 1": true,
+        "zone 10": true,
+        "zone 11": true,
+        "zone 12": true,
+        "zone 2": false,
+        "zone 3": true,
+        "zone 4": true,
+        "zone 5": true,
+        "zone 6": true,
+        "zone 7": true,
+        "zone 8": true,
+        "zone 9": true
+       },
+       "includeByName": {},
+       "indexByName": {
+        "Time 1": 27,
+        "Time 10": 72,
+        "Time 11": 73,
+        "Time 12": 74,
+        "Time 13": 79,
+        "Time 14": 84,
+        "Time 2": 4,
+        "Time 3": 15,
+        "Time 4": 28,
+        "Time 5": 37,
+        "Time 6": 45,
+        "Time 7": 53,
+        "Time 8": 60,
+        "Time 9": 65,
+        "Value #A": 35,
+        "Value #B": 13,
+        "Value #C": 20,
+        "Value #D": 8,
+        "Value #E": 44,
+        "Value #F": 52,
+        "Value #G": 36,
+        "Value #H": 71,
+        "Value #I": 70,
+        "Value #J": 9,
+        "Value #K": 10,
+        "Value #L": 11,
+        "Value #M": 12,
+        "Value #N": 14,
+        "__name__ 1": 1,
+        "__name__ 2": 5,
+        "__name__ 3": 16,
+        "__name__ 4": 29,
+        "__name__ 5": 38,
+        "__name__ 6": 46,
+        "__name__ 7": 54,
+        "__name__ 8": 85,
+        "error 1": 30,
+        "error 2": 39,
+        "error 3": 47,
+        "error 4": 55,
+        "instance 1": 2,
+        "instance 10": 75,
+        "instance 11": 80,
+        "instance 12": 86,
+        "instance 2": 6,
+        "instance 3": 17,
+        "instance 4": 31,
+        "instance 5": 40,
+        "instance 6": 48,
+        "instance 7": 56,
+        "instance 8": 61,
+        "instance 9": 66,
+        "job 1": 3,
+        "job 10": 76,
+        "job 11": 81,
+        "job 12": 87,
+        "job 2": 7,
+        "job 3": 18,
+        "job 4": 32,
+        "job 5": 41,
+        "job 6": 49,
+        "job 7": 57,
+        "job 8": 62,
+        "job 9": 67,
+        "network 1": 21,
+        "network 10": 77,
+        "network 11": 82,
+        "network 12": 88,
+        "network 2": 22,
+        "network 3": 25,
+        "network 4": 33,
+        "network 5": 42,
+        "network 6": 50,
+        "network 7": 58,
+        "network 8": 63,
+        "network 9": 68,
+        "version": 19,
+        "wss": 0,
+        "zone 1": 23,
+        "zone 10": 78,
+        "zone 11": 83,
+        "zone 12": 89,
+        "zone 2": 24,
+        "zone 3": 26,
+        "zone 4": 34,
+        "zone 5": 43,
+        "zone 6": 51,
+        "zone 7": 59,
+        "zone 8": 64,
+        "zone 9": 69
+       },
+       "renameByName": {
+        "Time 1": "Last check",
+        "Time 10": "",
+        "Time 4": "Last check",
+        "Value #A": "Connect",
+        "Value #B": "Block 0 time",
+        "Value #C": "Polkadot version",
+        "Value #D": "Connect time",
+        "Value #E": "Block 0",
+        "Value #F": "Version",
+        "Value #G": "Code",
+        "Value #H": "Uptime 30d",
+        "Value #I": "Uptime 10d",
+        "Value #J": "AVG",
+        "Value #K": "Median",
+        "Value #L": "P95",
+        "Value #M": "P99",
+        "Value #N": "Drift",
+        "network 1": "Network",
+        "network 2": "Network",
+        "version": "Version",
+        "wss": "Endpoint",
+        "zone 1": "Zone",
+        "zone 2": "Zone"
+       }
+      }
+     },
+     {
+      "id": "filterByValue",
+      "options": {
+       "filters": [
+        {
+         "config": {
+          "id": "isNull",
+          "options": {}
+         },
+         "fieldName": "Connect time"
+        }
+       ],
+       "match": "any",
+       "type": "exclude"
+      }
+     },
+     {
+      "disabled": true,
+      "id": "filterByValue",
+      "options": {
+       "filters": [
+        {
+         "config": {
+          "id": "isNull",
+          "options": {}
+         },
+         "fieldName": "Block 0 time"
+        }
+       ],
+       "match": "any",
+       "type": "exclude"
+      }
+     },
+     {
+      "disabled": true,
+      "id": "filterByValue",
+      "options": {
+       "filters": [
+        {
+         "config": {
+          "id": "isNull",
+          "options": {}
+         },
+         "fieldName": "Version"
+        }
+       ],
+       "match": "any",
+       "type": "exclude"
+      }
+     },
+     {
+      "id": "formatString",
+      "options": {
+       "outputFormat": "Substring",
+       "stringField": "version",
+       "substringEnd": 6
+      }
+     }
+    ],
+    "type": "table"
+   },
+   {
+    "collapsed": false,
+    "gridPos": {
+     "h": 1,
+     "w": 24,
+     "x": 0,
+     "y": 42
+    },
+    "id": 28,
+    "title": "RPC monitor statistics",
+    "type": "row"
+   },
+   {
+    "datasource": {
+     "type": "prometheus",
+     "uid": "${DS_PROMETHEUS}"
+    },
+    "fieldConfig": {
+     "defaults": {
+      "color": {
+       "mode": "thresholds"
+      },
+      "mappings": [
+       {
+        "options": {
+         "0": {
+          "color": "red",
+          "index": 0,
+          "text": "Pruned"
+         },
+         "1": {
+          "color": "green",
+          "index": 1,
+          "text": "Archive"
+         }
+        },
+        "type": "value"
+       }
+      ],
+      "thresholds": {
+       "mode": "absolute",
+       "steps": [
+        {
+         "color": "green",
+         "value": 0
+        }
+       ]
+      },
+      "unit": "s"
+     },
+     "overrides": [
+      {
+       "matcher": {
+        "id": "byName",
+        "options": "Connect time"
+       },
+       "properties": [
+        {
+         "id": "mappings",
+         "value": [
+          {
+           "options": {
+            "from": 0,
+            "result": {
+             "color": "green",
+             "index": 0
+            },
+            "to": 0.5
+           },
+           "type": "range"
+          },
+          {
+           "options": {
+            "from": 0.5,
+            "result": {
+             "color": "orange",
+             "index": 1
+            },
+            "to": 2
+           },
+           "type": "range"
+          },
+          {
+           "options": {
+            "from": 2,
+            "result": {
+             "color": "red",
+             "index": 2
+            },
+            "to": 10
+           },
+           "type": "range"
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "matcher": {
+        "id": "byName",
+        "options": "Time"
+       },
+       "properties": []
+      },
+      {
+       "matcher": {
+        "id": "byName",
+        "options": "Network"
+       },
+       "properties": []
+      },
+      {
+       "matcher": {
+        "id": "byName",
+        "options": "Endpoint"
+       },
+       "properties": []
+      },
+      {
+       "matcher": {
+        "id": "byName",
+        "options": "Version"
+       },
+       "properties": []
+      },
+      {
+       "matcher": {
+        "id": "byName",
+        "options": "Zone"
+       },
+       "properties": []
+      },
+      {
+       "__systemRef": "hideSeriesFrom",
+       "matcher": {
+        "id": "byNames",
+        "options": {
+         "mode": "exclude",
+         "names": [
+          "Value"
+         ],
+         "prefix": "All except:",
+         "readOnly": true
+        }
+       },
+       "properties": []
+      }
+     ]
+    },
+    "gridPos": {
+     "h": 3,
+     "w": 6,
+     "x": 0,
+     "y": 43
+    },
+    "id": 17,
+    "options": {
+     "colorMode": "value",
+     "graphMode": "area",
+     "justifyMode": "auto",
+     "orientation": "auto",
+     "percentChangeColorMode": "standard",
+     "reduceOptions": {
+      "calcs": [
+       "lastNotNull"
+      ],
+      "fields": "",
+      "values": false
+     },
+     "showPercentChange": false,
+     "textMode": "auto",
+     "wideLayout": true
+    },
+    "pluginVersion": "13.1.0",
+    "targets": [
+     {
+      "datasource": {
+       "type": "prometheus",
+       "uid": "${DS_PROMETHEUS}"
+      },
+      "editorMode": "code",
+      "exemplar": false,
+      "expr": "avg(avg_over_time(rpc_connect{wss=~\"$wss\",zone=~\"$zone\",network=~\"$network\",transport=~\"$transport\"}[$__range]))",
+      "format": "table",
+      "instant": true,
+      "interval": "",
+      "legendFormat": "__auto",
+      "range": false,
+      "refId": "B"
+     }
+    ],
+    "title": "Average time to connect from $zone zone for $network network",
+    "type": "stat"
+   },
+   {
+    "datasource": {
+     "type": "prometheus",
+     "uid": "${DS_PROMETHEUS}"
+    },
+    "fieldConfig": {
+     "defaults": {
+      "color": {
+       "mode": "thresholds"
+      },
+      "mappings": [
+       {
+        "options": {
+         "0": {
+          "color": "red",
+          "index": 0,
+          "text": "Pruned"
+         },
+         "1": {
+          "color": "green",
+          "index": 1,
+          "text": "Archive"
+         }
+        },
+        "type": "value"
+       }
+      ],
+      "thresholds": {
+       "mode": "absolute",
+       "steps": [
+        {
+         "color": "green",
+         "value": 0
+        }
+       ]
+      },
+      "unit": "s"
+     },
+     "overrides": [
+      {
+       "matcher": {
+        "id": "byName",
+        "options": "Connect time"
+       },
+       "properties": [
+        {
+         "id": "mappings",
+         "value": [
+          {
+           "options": {
+            "from": 0,
+            "result": {
+             "color": "green",
+             "index": 0
+            },
+            "to": 0.5
+           },
+           "type": "range"
+          },
+          {
+           "options": {
+            "from": 0.5,
+            "result": {
+             "color": "orange",
+             "index": 1
+            },
+            "to": 2
+           },
+           "type": "range"
+          },
+          {
+           "options": {
+            "from": 2,
+            "result": {
+             "color": "red",
+             "index": 2
+            },
+            "to": 10
+           },
+           "type": "range"
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "matcher": {
+        "id": "byName",
+        "options": "Time"
+       },
+       "properties": []
+      },
+      {
+       "matcher": {
+        "id": "byName",
+        "options": "Network"
+       },
+       "properties": []
+      },
+      {
+       "matcher": {
+        "id": "byName",
+        "options": "Endpoint"
+       },
+       "properties": []
+      },
+      {
+       "matcher": {
+        "id": "byName",
+        "options": "Version"
+       },
+       "properties": []
+      },
+      {
+       "matcher": {
+        "id": "byName",
+        "options": "Zone"
+       },
+       "properties": []
+      }
+     ]
+    },
+    "gridPos": {
+     "h": 3,
+     "w": 6,
+     "x": 6,
+     "y": 43
+    },
+    "id": 12,
+    "options": {
+     "colorMode": "value",
+     "graphMode": "area",
+     "justifyMode": "auto",
+     "orientation": "auto",
+     "percentChangeColorMode": "standard",
+     "reduceOptions": {
+      "calcs": [
+       "lastNotNull"
+      ],
+      "fields": "",
+      "values": false
+     },
+     "showPercentChange": false,
+     "textMode": "auto",
+     "wideLayout": true
+    },
+    "pluginVersion": "13.1.0",
+    "targets": [
+     {
+      "datasource": {
+       "type": "prometheus",
+       "uid": "${DS_PROMETHEUS}"
+      },
+      "editorMode": "code",
+      "exemplar": false,
+      "expr": "avg(avg_over_time(rpc_getblock{wss=~\"$wss\",zone=~\"$zone\",network=~\"$network\",transport=~\"$transport\"}[$__range]))",
+      "format": "table",
+      "instant": true,
+      "interval": "",
+      "legendFormat": "__auto",
+      "range": false,
+      "refId": "B"
+     }
+    ],
+    "title": "Average time to get block from $zone zone for $network network",
+    "type": "stat"
+   },
+   {
+    "datasource": {
+     "type": "prometheus",
+     "uid": "${DS_PROMETHEUS}"
+    },
+    "fieldConfig": {
+     "defaults": {
+      "color": {
+       "fixedColor": "#73BF69",
+       "mode": "palette-classic"
+      },
+      "custom": {
+       "hideFrom": {
+        "legend": false,
+        "tooltip": false,
+        "viz": false
+       }
+      }
+     }
+    },
+    "gridPos": {
+     "h": 6,
+     "w": 12,
+     "x": 12,
+     "y": 43
+    },
+    "id": 13,
+    "options": {
+     "legend": {
+      "displayMode": "list",
+      "overflow": "ellipsis",
+      "placement": "right",
+      "showLegend": true
+     },
+     "pieType": "pie",
+     "reduceOptions": {
+      "calcs": [
+       "lastNotNull"
+      ],
+      "fields": "",
+      "values": false
+     },
+     "sort": "desc",
+     "tooltip": {
+      "hideZeros": false,
+      "mode": "single",
+      "sort": "none"
+     }
+    },
+    "pluginVersion": "13.1.0",
+    "targets": [
+     {
+      "datasource": {
+       "type": "prometheus",
+       "uid": "${DS_PROMETHEUS}"
+      },
+      "editorMode": "code",
+      "exemplar": false,
+      "expr": "sum by (version) (last_over_time(rpc_version{wss=~\"$wss\",zone=~\"$zone\",network=~\"$network\",transport=~\"$transport\"}[30m]))",
+      "instant": true,
+      "interval": "30m",
+      "legendFormat": "__auto",
+      "range": false,
+      "refId": "A"
+     }
+    ],
+    "title": "Versions",
+    "type": "piechart"
+   },
+   {
+    "datasource": {
+     "type": "prometheus",
+     "uid": "${DS_PROMETHEUS}"
+    },
+    "fieldConfig": {
+     "defaults": {
+      "color": {
+       "mode": "thresholds"
+      },
+      "mappings": [
+       {
+        "options": {
+         "0": {
+          "color": "red",
+          "index": 0,
+          "text": "Pruned"
+         },
+         "1": {
+          "color": "green",
+          "index": 1,
+          "text": "Archive"
+         }
+        },
+        "type": "value"
+       }
+      ],
+      "thresholds": {
+       "mode": "absolute",
+       "steps": [
+        {
+         "color": "green",
+         "value": 0
+        }
+       ]
+      },
+      "unit": "s"
+     },
+     "overrides": [
+      {
+       "matcher": {
+        "id": "byName",
+        "options": "Connect time"
+       },
+       "properties": [
+        {
+         "id": "mappings",
+         "value": [
+          {
+           "options": {
+            "from": 0,
+            "result": {
+             "color": "green",
+             "index": 0
+            },
+            "to": 0.5
+           },
+           "type": "range"
+          },
+          {
+           "options": {
+            "from": 0.5,
+            "result": {
+             "color": "orange",
+             "index": 1
+            },
+            "to": 2
+           },
+           "type": "range"
+          },
+          {
+           "options": {
+            "from": 2,
+            "result": {
+             "color": "red",
+             "index": 2
+            },
+            "to": 10
+           },
+           "type": "range"
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "matcher": {
+        "id": "byName",
+        "options": "Time"
+       },
+       "properties": []
+      },
+      {
+       "matcher": {
+        "id": "byName",
+        "options": "Network"
+       },
+       "properties": []
+      },
+      {
+       "matcher": {
+        "id": "byName",
+        "options": "Endpoint"
+       },
+       "properties": []
+      },
+      {
+       "matcher": {
+        "id": "byName",
+        "options": "Version"
+       },
+       "properties": []
+      },
+      {
+       "matcher": {
+        "id": "byName",
+        "options": "Zone"
+       },
+       "properties": []
+      },
+      {
+       "__systemRef": "hideSeriesFrom",
+       "matcher": {
+        "id": "byNames",
+        "options": {
+         "mode": "exclude",
+         "names": [
+          "Value"
+         ],
+         "prefix": "All except:",
+         "readOnly": true
+        }
+       },
+       "properties": []
+      }
+     ]
+    },
+    "gridPos": {
+     "h": 3,
+     "w": 6,
+     "x": 0,
+     "y": 46
+    },
+    "id": 18,
+    "options": {
+     "colorMode": "value",
+     "graphMode": "area",
+     "justifyMode": "auto",
+     "orientation": "auto",
+     "percentChangeColorMode": "standard",
+     "reduceOptions": {
+      "calcs": [
+       "lastNotNull"
+      ],
+      "fields": "",
+      "values": false
+     },
+     "showPercentChange": false,
+     "textMode": "auto",
+     "wideLayout": true
+    },
+    "pluginVersion": "13.1.0",
+    "targets": [
+     {
+      "datasource": {
+       "type": "prometheus",
+       "uid": "${DS_PROMETHEUS}"
+      },
+      "editorMode": "code",
+      "exemplar": false,
+      "expr": "avg(stddev_over_time(rpc_connect{wss=~\"$wss\",zone=~\"$zone\",network=~\"$network\",transport=~\"$transport\"}[$__range]))",
+      "format": "table",
+      "instant": true,
+      "interval": "",
+      "legendFormat": "__auto",
+      "range": false,
+      "refId": "B"
+     }
+    ],
+    "title": "Standard deviation to connect from $zone zone for $network network",
+    "type": "stat"
+   },
+   {
+    "datasource": {
+     "type": "prometheus",
+     "uid": "${DS_PROMETHEUS}"
+    },
+    "fieldConfig": {
+     "defaults": {
+      "color": {
+       "mode": "thresholds"
+      },
+      "mappings": [
+       {
+        "options": {
+         "0": {
+          "color": "red",
+          "index": 0,
+          "text": "Pruned"
+         },
+         "1": {
+          "color": "green",
+          "index": 1,
+          "text": "Archive"
+         }
+        },
+        "type": "value"
+       }
+      ],
+      "thresholds": {
+       "mode": "absolute",
+       "steps": [
+        {
+         "color": "green",
+         "value": 0
+        }
+       ]
+      },
+      "unit": "s"
+     },
+     "overrides": [
+      {
+       "matcher": {
+        "id": "byName",
+        "options": "Connect time"
+       },
+       "properties": [
+        {
+         "id": "mappings",
+         "value": [
+          {
+           "options": {
+            "from": 0,
+            "result": {
+             "color": "green",
+             "index": 0
+            },
+            "to": 0.5
+           },
+           "type": "range"
+          },
+          {
+           "options": {
+            "from": 0.5,
+            "result": {
+             "color": "orange",
+             "index": 1
+            },
+            "to": 2
+           },
+           "type": "range"
+          },
+          {
+           "options": {
+            "from": 2,
+            "result": {
+             "color": "red",
+             "index": 2
+            },
+            "to": 10
+           },
+           "type": "range"
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "matcher": {
+        "id": "byName",
+        "options": "Time"
+       },
+       "properties": []
+      },
+      {
+       "matcher": {
+        "id": "byName",
+        "options": "Network"
+       },
+       "properties": []
+      },
+      {
+       "matcher": {
+        "id": "byName",
+        "options": "Endpoint"
+       },
+       "properties": []
+      },
+      {
+       "matcher": {
+        "id": "byName",
+        "options": "Version"
+       },
+       "properties": []
+      },
+      {
+       "matcher": {
+        "id": "byName",
+        "options": "Zone"
+       },
+       "properties": []
+      }
+     ]
+    },
+    "gridPos": {
+     "h": 3,
+     "w": 6,
+     "x": 6,
+     "y": 46
+    },
+    "id": 14,
+    "options": {
+     "colorMode": "value",
+     "graphMode": "area",
+     "justifyMode": "auto",
+     "orientation": "auto",
+     "percentChangeColorMode": "standard",
+     "reduceOptions": {
+      "calcs": [
+       "lastNotNull"
+      ],
+      "fields": "",
+      "values": false
+     },
+     "showPercentChange": false,
+     "textMode": "auto",
+     "wideLayout": true
+    },
+    "pluginVersion": "13.1.0",
+    "targets": [
+     {
+      "datasource": {
+       "type": "prometheus",
+       "uid": "${DS_PROMETHEUS}"
+      },
+      "editorMode": "code",
+      "exemplar": false,
+      "expr": "avg(stddev_over_time(rpc_getblock{wss=~\"$wss\",zone=~\"$zone\",network=~\"$network\",transport=~\"$transport\"}[$__range]))",
+      "format": "table",
+      "instant": true,
+      "interval": "",
+      "legendFormat": "__auto",
+      "range": false,
+      "refId": "B"
+     }
+    ],
+    "title": "Standard deviation to get block from $zone zone for $network network",
+    "type": "stat"
+   },
+   {
+    "datasource": {
+     "type": "prometheus",
+     "uid": "${DS_PROMETHEUS}"
+    },
+    "fieldConfig": {
+     "defaults": {
+      "color": {
+       "mode": "palette-classic"
+      },
+      "custom": {
+       "axisBorderShow": false,
+       "axisCenteredZero": false,
+       "axisColorMode": "text",
+       "axisLabel": "",
+       "axisPlacement": "auto",
+       "barAlignment": 0,
+       "barWidthFactor": 0.6,
+       "drawStyle": "line",
+       "fillOpacity": 0,
+       "gradientMode": "none",
+       "hideFrom": {
+        "legend": false,
+        "tooltip": false,
+        "viz": false
+       },
+       "insertNulls": 900000,
+       "lineInterpolation": "smooth",
+       "lineStyle": {
+        "fill": "solid"
+       },
+       "lineWidth": 2,
+       "pointSize": 5,
+       "scaleDistribution": {
+        "type": "linear"
+       },
+       "showPoints": "auto",
+       "showValues": false,
+       "spanNulls": false,
+       "stacking": {
+        "group": "A",
+        "mode": "none"
+       },
+       "thresholdsStyle": {
+        "mode": "off"
+       }
+      },
+      "thresholds": {
+       "mode": "absolute",
+       "steps": [
+        {
+         "color": "green",
+         "value": 0
+        },
+        {
+         "color": "red",
+         "value": 80
+        }
+       ]
+      },
+      "unit": "s"
+     }
+    },
+    "gridPos": {
+     "h": 19,
+     "w": 13,
+     "x": 0,
+     "y": 49
+    },
+    "id": 1,
+    "options": {
+     "annotations": {
+      "clustering": -1,
+      "multiLane": false
+     },
+     "legend": {
+      "calcs": [],
+      "displayMode": "list",
+      "enableFacetedFilter": false,
+      "overflow": "ellipsis",
+      "placement": "right",
+      "showLegend": true
+     },
+     "tooltip": {
+      "hideZeros": false,
+      "mode": "single",
+      "sort": "none"
+     }
+    },
+    "pluginVersion": "13.1.0",
+    "targets": [
+     {
+      "datasource": {
+       "type": "prometheus",
+       "uid": "${DS_PROMETHEUS}"
+      },
+      "editorMode": "code",
+      "exemplar": false,
+      "expr": "avg_over_time(rpc_connect{zone=~\"$zone\",network=~\"$network\",wss=~\"$wss\",transport=~\"$transport\"}[$__interval])",
+      "instant": false,
+      "interval": "",
+      "legendFormat": "{{wss}}",
+      "range": true,
+      "refId": "A"
+     }
+    ],
+    "title": "Time to connect to endpoint from $zone on $network",
+    "type": "timeseries"
+   },
+   {
+    "datasource": {
+     "type": "prometheus",
+     "uid": "${DS_PROMETHEUS}"
+    },
+    "fieldConfig": {
+     "defaults": {
+      "custom": {
+       "hideFrom": {
+        "legend": false,
+        "tooltip": false,
+        "viz": false
+       },
+       "scaleDistribution": {
+        "type": "linear"
+       }
+      }
+     }
+    },
+    "gridPos": {
+     "h": 19,
+     "w": 11,
+     "x": 13,
+     "y": 49
+    },
+    "id": 9,
+    "options": {
+     "annotations": {
+      "clustering": -1,
+      "multiLane": false
+     },
+     "calculate": false,
+     "cellGap": 0,
+     "color": {
+      "exponent": 0.5,
+      "fill": "dark-orange",
+      "max": 0.6,
+      "min": 0,
+      "mode": "scheme",
+      "reverse": false,
+      "scale": "exponential",
+      "scheme": "Oranges",
+      "steps": 65
+     },
+     "exemplars": {
+      "color": "rgba(255,0,255,0.7)"
+     },
+     "filterValues": {
+      "le": 1e-09
+     },
+     "legend": {
+      "show": true
+     },
+     "rowsFrame": {
+      "layout": "auto"
+     },
+     "tooltip": {
+      "mode": "single",
+      "showColorScale": false,
+      "yHistogram": false
+     },
+     "yAxis": {
+      "axisPlacement": "right",
+      "reverse": false,
+      "unit": "s"
+     }
+    },
+    "pluginVersion": "13.1.0",
+    "targets": [
+     {
+      "datasource": {
+       "type": "prometheus",
+       "uid": "${DS_PROMETHEUS}"
+      },
+      "editorMode": "code",
+      "exemplar": false,
+      "expr": "avg_over_time(rpc_connect{zone=~\"$zone\",network=~\"$network\",wss=~\"$wss\",transport=~\"$transport\"}[$__interval])",
+      "instant": false,
+      "interval": "",
+      "legendFormat": "{{wss}}",
+      "range": true,
+      "refId": "A"
+     }
+    ],
+    "title": "Time to connect to endpoint heatmap from $zone on $network",
+    "type": "heatmap"
+   },
+   {
+    "datasource": {
+     "type": "prometheus",
+     "uid": "${DS_PROMETHEUS}"
+    },
+    "fieldConfig": {
+     "defaults": {
+      "color": {
+       "mode": "palette-classic"
+      },
+      "custom": {
+       "axisBorderShow": false,
+       "axisCenteredZero": false,
+       "axisColorMode": "text",
+       "axisLabel": "",
+       "axisPlacement": "auto",
+       "barAlignment": 0,
+       "barWidthFactor": 0.6,
+       "drawStyle": "line",
+       "fillOpacity": 0,
+       "gradientMode": "opacity",
+       "hideFrom": {
+        "legend": false,
+        "tooltip": false,
+        "viz": false
+       },
+       "insertNulls": 900000,
+       "lineInterpolation": "smooth",
+       "lineStyle": {
+        "fill": "solid"
+       },
+       "lineWidth": 2,
+       "pointSize": 5,
+       "scaleDistribution": {
+        "type": "linear"
+       },
+       "showPoints": "auto",
+       "showValues": false,
+       "spanNulls": false,
+       "stacking": {
+        "group": "A",
+        "mode": "none"
+       },
+       "thresholdsStyle": {
+        "mode": "off"
+       }
+      },
+      "thresholds": {
+       "mode": "absolute",
+       "steps": [
+        {
+         "color": "green",
+         "value": 0
+        },
+        {
+         "color": "red",
+         "value": 80
+        }
+       ]
+      },
+      "unit": "s"
+     }
+    },
+    "gridPos": {
+     "h": 18,
+     "w": 13,
+     "x": 0,
+     "y": 68
+    },
+    "id": 6,
+    "options": {
+     "annotations": {
+      "clustering": -1,
+      "multiLane": false
+     },
+     "legend": {
+      "calcs": [],
+      "displayMode": "list",
+      "enableFacetedFilter": false,
+      "overflow": "ellipsis",
+      "placement": "right",
+      "showLegend": true
+     },
+     "tooltip": {
+      "hideZeros": false,
+      "mode": "single",
+      "sort": "none"
+     }
+    },
+    "pluginVersion": "13.1.0",
+    "targets": [
+     {
+      "datasource": {
+       "type": "prometheus",
+       "uid": "${DS_PROMETHEUS}"
+      },
+      "editorMode": "code",
+      "expr": "avg_over_time(rpc_getblock{zone=~\"$zone\",network=~\"$network\",wss=~\"$wss\",transport=~\"$transport\"}[$__interval])",
+      "instant": false,
+      "interval": "10m",
+      "legendFormat": "{{wss}}",
+      "range": true,
+      "refId": "A"
+     }
+    ],
+    "title": "Time to get block from $zone on $network",
+    "type": "timeseries"
+   },
+   {
+    "datasource": {
+     "type": "prometheus",
+     "uid": "${DS_PROMETHEUS}"
+    },
+    "fieldConfig": {
+     "defaults": {
+      "custom": {
+       "hideFrom": {
+        "legend": false,
+        "tooltip": false,
+        "viz": false
+       },
+       "scaleDistribution": {
+        "type": "linear"
+       }
+      }
+     }
+    },
+    "gridPos": {
+     "h": 18,
+     "w": 11,
+     "x": 13,
+     "y": 68
+    },
+    "id": 8,
+    "options": {
+     "annotations": {
+      "clustering": -1,
+      "multiLane": false
+     },
+     "calculate": false,
+     "cellGap": 0,
+     "color": {
+      "exponent": 0.5,
+      "fill": "dark-orange",
+      "max": 0.6,
+      "mode": "scheme",
+      "reverse": false,
+      "scale": "exponential",
+      "scheme": "Oranges",
+      "steps": 80
+     },
+     "exemplars": {
+      "color": "rgba(255,0,255,0.7)"
+     },
+     "filterValues": {
+      "le": 1e-09
+     },
+     "legend": {
+      "show": true
+     },
+     "rowsFrame": {
+      "layout": "auto"
+     },
+     "tooltip": {
+      "mode": "single",
+      "showColorScale": false,
+      "yHistogram": false
+     },
+     "yAxis": {
+      "axisPlacement": "right",
+      "reverse": false,
+      "unit": "s"
+     }
+    },
+    "pluginVersion": "13.1.0",
+    "targets": [
+     {
+      "datasource": {
+       "type": "prometheus",
+       "uid": "${DS_PROMETHEUS}"
+      },
+      "editorMode": "code",
+      "expr": "avg_over_time(rpc_getblock{zone=~\"$zone\",network=~\"$network\",wss=~\"$wss\",transport=~\"$transport\"}[$__interval])",
+      "instant": false,
+      "interval": "",
+      "legendFormat": "{{wss}}",
+      "range": true,
+      "refId": "A"
+     }
+    ],
+    "title": "Time to get block heatmap from $zone on $network",
+    "type": "heatmap"
+   },
+   {
+    "collapsed": false,
+    "gridPos": {
+     "h": 1,
+     "w": 24,
+     "x": 0,
+     "y": 86
+    },
+    "id": 29,
+    "title": "Prometheus statistics",
+    "type": "row"
+   },
+   {
+    "datasource": {
+     "type": "prometheus",
+     "uid": "${DS_PROMETHEUS}"
+    },
+    "fieldConfig": {
+     "defaults": {
+      "color": {
+       "mode": "palette-classic"
+      },
+      "custom": {
+       "axisBorderShow": false,
+       "axisCenteredZero": false,
+       "axisColorMode": "text",
+       "axisLabel": "",
+       "axisPlacement": "auto",
+       "barAlignment": 0,
+       "barWidthFactor": 0.6,
+       "drawStyle": "line",
+       "fillOpacity": 0,
+       "gradientMode": "none",
+       "hideFrom": {
+        "legend": false,
+        "tooltip": false,
+        "viz": false
+       },
+       "insertNulls": false,
+       "lineInterpolation": "linear",
+       "lineWidth": 1,
+       "pointSize": 5,
+       "scaleDistribution": {
+        "type": "linear"
+       },
+       "showPoints": "auto",
+       "showValues": false,
+       "spanNulls": false,
+       "stacking": {
+        "group": "A",
+        "mode": "none"
+       },
+       "thresholdsStyle": {
+        "mode": "off"
+       }
+      },
+      "thresholds": {
+       "mode": "absolute",
+       "steps": [
+        {
+         "color": "green",
+         "value": 0
+        },
+        {
+         "color": "red",
+         "value": 80
+        }
+       ]
+      }
+     }
+    },
+    "gridPos": {
+     "h": 10,
+     "w": 24,
+     "x": 0,
+     "y": 87
+    },
+    "id": 19,
+    "maxPerRow": 2,
+    "options": {
+     "annotations": {
+      "clustering": -1,
+      "multiLane": false
+     },
+     "legend": {
+      "calcs": [],
+      "displayMode": "list",
+      "enableFacetedFilter": false,
+      "overflow": "ellipsis",
+      "placement": "bottom",
+      "showLegend": true
+     },
+     "tooltip": {
+      "hideZeros": false,
+      "mode": "single",
+      "sort": "none"
+     }
+    },
+    "pluginVersion": "13.1.0",
+    "repeat": "chain",
+    "repeatDirection": "h",
+    "targets": [
+     {
+      "datasource": {
+       "type": "prometheus",
+       "uid": "${DS_PROMETHEUS}"
+      },
+      "editorMode": "code",
+      "expr": "sum(rate(substrate_rpc_calls_started{chain=\"$chain\"}[$__rate_interval])) by (job)",
+      "legendFormat": "__auto",
+      "range": true,
+      "refId": "A"
+     }
+    ],
+    "title": "$chain | rpc_calls_started per second",
+    "type": "timeseries"
+   },
+   {
+    "collapsed": false,
+    "gridPos": {
+     "h": 1,
+     "w": 24,
+     "x": 0,
+     "y": 98
+    },
+    "id": 31,
+    "panels": [],
+    "title": "HTTP statistics",
+    "type": "row"
+   },
+   {
+    "datasource": {
+     "type": "prometheus",
+     "uid": "${DS_PROMETHEUS}"
+    },
+    "fieldConfig": {
+     "defaults": {
+      "color": {
+       "mode": "thresholds"
+      },
+      "mappings": [
+       {
+        "options": {
+         "0": {
+          "color": "red",
+          "index": 0,
+          "text": "Pruned"
+         },
+         "1": {
+          "color": "green",
+          "index": 1,
+          "text": "Archive"
+         }
+        },
+        "type": "value"
+       }
+      ],
+      "thresholds": {
+       "mode": "absolute",
+       "steps": [
+        {
+         "color": "green",
+         "value": 0
+        }
+       ]
+      },
+      "unit": "s"
+     },
+     "overrides": [
+      {
+       "matcher": {
+        "id": "byName",
+        "options": "Connect time"
+       },
+       "properties": [
+        {
+         "id": "mappings",
+         "value": [
+          {
+           "options": {
+            "from": 0,
+            "result": {
+             "color": "green",
+             "index": 0
+            },
+            "to": 0.5
+           },
+           "type": "range"
+          },
+          {
+           "options": {
+            "from": 0.5,
+            "result": {
+             "color": "orange",
+             "index": 1
+            },
+            "to": 2
+           },
+           "type": "range"
+          },
+          {
+           "options": {
+            "from": 2,
+            "result": {
+             "color": "red",
+             "index": 2
+            },
+            "to": 10
+           },
+           "type": "range"
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "matcher": {
+        "id": "byName",
+        "options": "Time"
+       },
+       "properties": []
+      },
+      {
+       "matcher": {
+        "id": "byName",
+        "options": "Network"
+       },
+       "properties": []
+      },
+      {
+       "matcher": {
+        "id": "byName",
+        "options": "Endpoint"
+       },
+       "properties": []
+      },
+      {
+       "matcher": {
+        "id": "byName",
+        "options": "Version"
+       },
+       "properties": []
+      },
+      {
+       "matcher": {
+        "id": "byName",
+        "options": "Zone"
+       },
+       "properties": []
+      },
+      {
+       "__systemRef": "hideSeriesFrom",
+       "matcher": {
+        "id": "byNames",
+        "options": {
+         "mode": "exclude",
+         "names": [
+          "Value"
+         ],
+         "prefix": "All except:",
+         "readOnly": true
+        }
+       },
+       "properties": []
+      }
+     ]
+    },
+    "gridPos": {
+     "h": 3,
+     "w": 6,
+     "x": 0,
+     "y": 99
+    },
+    "id": 30,
+    "options": {
+     "colorMode": "value",
+     "graphMode": "area",
+     "justifyMode": "auto",
+     "orientation": "auto",
+     "percentChangeColorMode": "standard",
+     "reduceOptions": {
+      "calcs": [
+       "lastNotNull"
+      ],
+      "fields": "",
+      "values": false
+     },
+     "showPercentChange": false,
+     "textMode": "auto",
+     "wideLayout": true
+    },
+    "pluginVersion": "13.1.0",
+    "targets": [
+     {
+      "datasource": {
+       "type": "prometheus",
+       "uid": "${DS_PROMETHEUS}"
+      },
+      "editorMode": "code",
+      "exemplar": false,
+      "expr": "avg(avg_over_time(rpc_connect{wss=~\"$wss\",zone=~\"$zone\",network=~\"$network\",transport=\"http\"}[$__range]))",
+      "format": "table",
+      "instant": true,
+      "interval": "",
+      "legendFormat": "__auto",
+      "range": false,
+      "refId": "B"
+     }
+    ],
+    "title": "HTTP average time to connect from $zone zone for $network network",
+    "type": "stat"
+   },
+   {
+    "datasource": {
+     "type": "prometheus",
+     "uid": "${DS_PROMETHEUS}"
+    },
+    "fieldConfig": {
+     "defaults": {
+      "color": {
+       "mode": "thresholds"
+      },
+      "mappings": [
+       {
+        "options": {
+         "0": {
+          "color": "red",
+          "index": 0,
+          "text": "Pruned"
+         },
+         "1": {
+          "color": "green",
+          "index": 1,
+          "text": "Archive"
+         }
+        },
+        "type": "value"
+       }
+      ],
+      "thresholds": {
+       "mode": "absolute",
+       "steps": [
+        {
+         "color": "green",
+         "value": 0
+        }
+       ]
+      },
+      "unit": "s"
+     },
+     "overrides": [
+      {
+       "matcher": {
+        "id": "byName",
+        "options": "Connect time"
+       },
+       "properties": [
+        {
+         "id": "mappings",
+         "value": [
+          {
+           "options": {
+            "from": 0,
+            "result": {
+             "color": "green",
+             "index": 0
+            },
+            "to": 0.5
+           },
+           "type": "range"
+          },
+          {
+           "options": {
+            "from": 0.5,
+            "result": {
+             "color": "orange",
+             "index": 1
+            },
+            "to": 2
+           },
+           "type": "range"
+          },
+          {
+           "options": {
+            "from": 2,
+            "result": {
+             "color": "red",
+             "index": 2
+            },
+            "to": 10
+           },
+           "type": "range"
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "matcher": {
+        "id": "byName",
+        "options": "Time"
+       },
+       "properties": []
+      },
+      {
+       "matcher": {
+        "id": "byName",
+        "options": "Network"
+       },
+       "properties": []
+      },
+      {
+       "matcher": {
+        "id": "byName",
+        "options": "Endpoint"
+       },
+       "properties": []
+      },
+      {
+       "matcher": {
+        "id": "byName",
+        "options": "Version"
+       },
+       "properties": []
+      },
+      {
+       "matcher": {
+        "id": "byName",
+        "options": "Zone"
+       },
+       "properties": []
+      }
+     ]
+    },
+    "gridPos": {
+     "h": 3,
+     "w": 6,
+     "x": 6,
+     "y": 99
+    },
+    "id": 30,
+    "options": {
+     "colorMode": "value",
+     "graphMode": "area",
+     "justifyMode": "auto",
+     "orientation": "auto",
+     "percentChangeColorMode": "standard",
+     "reduceOptions": {
+      "calcs": [
+       "lastNotNull"
+      ],
+      "fields": "",
+      "values": false
+     },
+     "showPercentChange": false,
+     "textMode": "auto",
+     "wideLayout": true
+    },
+    "pluginVersion": "13.1.0",
+    "targets": [
+     {
+      "datasource": {
+       "type": "prometheus",
+       "uid": "${DS_PROMETHEUS}"
+      },
+      "editorMode": "code",
+      "exemplar": false,
+      "expr": "avg(avg_over_time(rpc_getblock{wss=~\"$wss\",zone=~\"$zone\",network=~\"$network\",transport=\"http\"}[$__range]))",
+      "format": "table",
+      "instant": true,
+      "interval": "",
+      "legendFormat": "__auto",
+      "range": false,
+      "refId": "B"
+     }
+    ],
+    "title": "HTTP average time to get block from $zone zone for $network network",
+    "type": "stat"
+   }
+  ],
+  "preload": false,
+  "refresh": "5m",
+  "schemaVersion": 42,
+  "templating": {
+   "list": [
+    {
+     "allowCustomValue": true,
+     "current": {
+      "text": "All",
+      "value": [
+       "$__all"
+      ]
+     },
+     "datasource": {
+      "type": "prometheus",
+      "uid": "${DS_PROMETHEUS}"
+     },
+     "definition": "label_values(rpc_connect,zone)",
+     "hide": 0,
+     "includeAll": true,
+     "label": "zone",
+     "multi": true,
+     "name": "zone",
+     "options": [],
+     "query": {
+      "qryType": 1,
+      "query": "label_values(rpc_connect,zone)",
+      "refId": "PrometheusVariableQueryEditor-VariableQuery"
+     },
+     "refresh": 1,
+     "regex": "",
+     "regexApplyTo": "value",
+     "skipUrlSync": false,
+     "sort": 0,
+     "type": "query"
+    },
+    {
+     "allowCustomValue": true,
+     "current": {
+      "text": "All",
+      "value": [
+       "$__all"
+      ]
+     },
+     "datasource": {
+      "type": "prometheus",
+      "uid": "${DS_PROMETHEUS}"
+     },
+     "definition": "label_values(rpc_connect,network)",
+     "hide": 0,
+     "includeAll": true,
+     "label": "network",
+     "multi": true,
+     "name": "network",
+     "options": [],
+     "query": {
+      "qryType": 1,
+      "query": "label_values(rpc_connect,network)",
+      "refId": "PrometheusVariableQueryEditor-VariableQuery"
+     },
+     "refresh": 1,
+     "regex": "",
+     "regexApplyTo": "value",
+     "skipUrlSync": false,
+     "sort": 0,
+     "type": "query"
+    },
+    {
+     "allowCustomValue": true,
+     "current": {
+      "text": "All",
+      "value": [
+       "$__all"
+      ]
+     },
+     "datasource": {
+      "type": "prometheus",
+      "uid": "${DS_PROMETHEUS}"
+     },
+     "definition": "label_values(wss)",
+     "hide": 0,
+     "includeAll": true,
+     "label": "wss",
+     "multi": true,
+     "name": "wss",
+     "options": [],
+     "query": "label_values(rpc_connect{transport=~\"$transport\"},wss)",
+     "refresh": 1,
+     "regex": "",
+     "regexApplyTo": "value",
+     "skipUrlSync": false,
+     "sort": 0,
+     "type": "query"
+    },
+    {
+     "allowCustomValue": true,
+     "current": {
+      "text": "All",
+      "value": [
+       "$__all"
+      ]
+     },
+     "datasource": {
+      "type": "prometheus"
+     },
+     "definition": "label_values(chain)",
+     "hide": 0,
+     "includeAll": true,
+     "label": "chain",
+     "multi": true,
+     "name": "chain",
+     "options": [],
+     "query": {
+      "qryType": 1,
+      "query": "label_values(chain)",
+      "refId": "PrometheusVariableQueryEditor-VariableQuery"
+     },
+     "refresh": 1,
+     "regex": "",
+     "regexApplyTo": "value",
+     "skipUrlSync": false,
+     "sort": 0,
+     "type": "query"
+    },
+    {
+     "current": {
+      "selected": true,
+      "text": [
+       "ws",
+       "http",
+       "http3"
+      ],
+      "value": [
+       "ws",
+       "http",
+       "http3"
+      ]
+     },
+     "definition": "ws|http|http3",
+     "hide": 0,
+     "includeAll": false,
+     "label": "transport",
+     "multi": true,
+     "name": "transport",
+     "options": [
+      {
+       "selected": true,
+       "text": "ws",
+       "value": "ws"
+      },
+      {
+       "selected": true,
+       "text": "http",
+       "value": "http"
+      },
+      {
+       "selected": true,
+       "text": "http3",
+       "value": "http3"
+      }
+     ],
+     "query": "ws|http|http3",
+     "refresh": 0,
+     "regex": "",
+     "skipUrlSync": false,
+     "sort": 0,
+     "type": "custom"
+    }
+   ]
+  },
+  "time": {
+   "from": "now-12h",
+   "to": "now"
+  },
+  "timepicker": {
+   "refresh_intervals": [
+    "5m",
+    "15m",
+    "30m",
+    "1h"
+   ]
+  },
+  "timezone": "browser",
+  "title": "rpc-providers (websocket + http)",
+  "uid": "rotko-rpc-providers-http",
+  "version": 169,
+  "slug": "rpc-providers-websocket-http",
+  "tags": [],
+  "description": "Same as rpc-providers.net but with HTTP/HTTPS JSON-RPC values added (transport label ws|http|http3)."
+ },
+ "meta": {},
+ "__inputs": [
+  {
+   "name": "DS_PROMETHEUS",
+   "label": "Prometheus",
+   "description": "",
+   "type": "datasource",
+   "pluginId": "prometheus",
+   "pluginName": "Prometheus"
+  },
+  {
+   "name": "DS_LOKI",
+   "label": "Loki",
+   "description": "",
+   "type": "datasource",
+   "pluginId": "loki",
+   "pluginName": "Loki"
+  }
+ ]
+}

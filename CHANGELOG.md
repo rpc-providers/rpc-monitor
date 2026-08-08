@@ -3,6 +3,23 @@
 All notable changes to RPC Monitor are recorded here. Releases use
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+
+- HTTP JSON-RPC monitoring: endpoints can be checked over `https://` with
+  `transport = "http"` (HTTP/3-optimistic with HTTP/2/HTTP/1.1 fallback) or
+  `transport = "http3"` (forced QUIC), alongside the default websocket checks.
+- `transport` label (`ws`, `http`, `http3`) on all emitted metrics so
+  dashboards can show websocket and HTTP values together.
+- `rpc_httpversion` metric reporting the HTTP version an endpoint actually
+  answered on (`http_version="h3"|"h2"|"http1.1"`), so an
+  HTTP/3-optimistic check shows whether QUIC won or the fallback was used.
+- HTTP (https) entries for every member endpoint whose HTTPS JSON-RPC endpoint
+  was verified, so both websocket and http are measured.
+- Importable Grafana dashboard mirroring rpc-providers.net with HTTP values
+  added: `deploy/grafana/rpc-providers-ws-http.json`.
+
 ## [1.0.0] - 2026-06-21
 
 ### Added
