@@ -182,6 +182,11 @@ Field meanings:
 - `zone`: monitor zone this endpoint belongs to.
 - `transport`: optional, `ws` (default), `http`, or `http3`. `http` is
   HTTP/3-optimistic with HTTP/2/HTTP/1.1 fallback; `http3` forces QUIC.
+- `flavor`: optional JSON-RPC dialect, `substrate` (default) or `eth`. `eth`
+  is for EVM proxies such as Asset Hub `eth-rpc` — the checks use the Ethereum
+  methods (`eth_getBlockByNumber`, `web3_clientVersion`) instead of the
+  substrate ones. Block-zero is skipped for `eth` endpoints that don't expose
+  a genesis block.
 - `provider`: optional provider label for humans and future tooling.
 
 To offer both protocols for an endpoint, list it twice with the matching

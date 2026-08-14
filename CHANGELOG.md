@@ -10,6 +10,10 @@ All notable changes to RPC Monitor are recorded here. Releases use
 - HTTP JSON-RPC monitoring: endpoints can be checked over `https://` with
   `transport = "http"` (HTTP/3-optimistic with HTTP/2/HTTP/1.1 fallback) or
   `transport = "http3"` (forced QUIC), alongside the default websocket checks.
+- EVM (`eth-rpc`) endpoint support via `flavor = "eth"`: checks use Ethereum
+  JSON-RPC methods (`eth_getBlockByNumber`, `web3_clientVersion`) so Asset Hub
+  EVM proxies can be monitored over HTTP. Block-zero is skipped when the proxy
+  has no genesis block. Default `flavor` is `substrate`.
 - `transport` label (`ws`, `http`, `http3`) on all emitted metrics so
   dashboards can show websocket and HTTP values together.
 - `rpc_httpversion` metric reporting the HTTP version an endpoint actually

@@ -376,3 +376,15 @@ network = "polkadot-assethub"
 zone = "eu-central"
 transport = "http"
 provider = "gatotech"
+
+# EVM (eth-rpc) endpoints — set flavor = "eth" for Ethereum JSON-RPC proxies
+# (e.g. Asset Hub eth-rpc). Checks use eth_getBlockByNumber / web3_clientVersion
+# instead of the substrate methods. Add per-deployment, e.g.:
+#
+# [[endpoints]]
+# url = "https://<asset-hub-evm-host>"
+# network = "kusama-assethub-evm"
+# zone = "ap-southeast"
+# transport = "http"
+# flavor = "eth"
+# provider = "<provider>"

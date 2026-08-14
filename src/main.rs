@@ -187,6 +187,18 @@ impl Transport {
     }
 }
 
+/// JSON-RPC dialect an endpoint speaks. Substrate nodes use `chain_*`/`system_*`;
+/// EVM proxies (e.g. Asset Hub `eth-rpc`) speak the Ethereum `eth_*` methods.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Deserialize)]
+#[serde(rename_all = "lowercase")]
+enum Flavor {
+    /// Substrate JSON-RPC (`chain_getBlock`, `system_version`). The default.
+    #[default]
+    Substrate,
+    /// Ethereum JSON-RPC (`eth_getBlockByNumber`, `web3_clientVersion`).
+    Eth,
+}
+
 /// HTTP version a server actually answered on. The `http` transport is
 /// HTTP/3-optimistic, so the negotiated version is only known after a
 /// response has been received.
@@ -226,6 +238,8 @@ struct Endpoint {
     zone: String,
     #[serde(default)]
     transport: Transport,
+    #[serde(default)]
+    flavor: Flavor,
     #[allow(dead_code)]
     provider: Option<String>,
 }
@@ -1742,16 +1756,23 @@ async fn check_endpoint_http(
 
     let mut next_id: u64 = 1;
 
+    // Per-flavor method names: substrate nodes speak chain_*/system_*, EVM
+    // proxies (eth-rpc) speak eth_*/web3_*.
+    let (connect_method, version_method) = match endpoint.flavor {
+        Flavor::Eth => ("eth_chainId", "web3_clientVersion"),
+        Flavor::Substrate => ("system_health", "system_version"),
+    };
+
     // Connect probe: the first request establishes the QUIC/HTTP connection, so
-    // a lightweight system_health call times connection setup. Only the timing
-    // is reported (as rpc_connect); the result is discarded.
+    // a lightweight call times connection setup. Only the timing is reported
+    // (as rpc_connect); the result is discarded.
     let connect_secs = {
         let id = next_id;
         next_id += 1;
         match timed_rpc_http(
             &client,
             &endpoint.url,
-            "system_health",
+            connect_method,
             json!([]),
             id,
             Duration::from_secs(timeouts.connect_secs),
@@ -1769,25 +1790,33 @@ async fn check_endpoint_http(
         }
     };
 
-    let block_zero_secs = match zero_hashes.get(&endpoint.network) {
-        Some(hash) => {
+    let block_zero_secs = match endpoint.flavor {
+        // EVM: eth_getBlockByNumber("0x0") — no genesis hash lookup needed.
+        Flavor::Eth => {
             let id = next_id;
             next_id += 1;
             match timed_rpc_http(
                 &client,
                 &endpoint.url,
-                "chain_getBlock",
-                json!([hash]),
+                "eth_getBlockByNumber",
+                json!(["0x0", false]),
                 id,
                 Duration::from_secs(timeouts.block_zero_secs),
             )
             .await
             {
-                Ok((secs, value)) if is_block_zero_response(&value) => Some(secs),
+                Ok((secs, value)) if is_eth_block_zero_response(&value) => Some(secs),
+                // EVM proxies (Asset Hub eth-rpc) don't expose the substrate
+                // genesis as eth block 0 — a null result means "no genesis
+                // here", so skip the probe rather than flag an error.
+                Ok((_, value)) if value.is_null() => {
+                    skipped.push("blockzero");
+                    None
+                }
                 Ok((_, value)) => {
                     errors.push(CheckError {
                         kind: "blockzero",
-                        message: format!("unexpected block response: {value}"),
+                        message: format!("unexpected eth block 0 response: {value}"),
                     });
                     None
                 }
@@ -1800,37 +1829,80 @@ async fn check_endpoint_http(
                 }
             }
         }
-        None => {
-            skipped.push("blockzero");
-            None
-        }
+        Flavor::Substrate => match zero_hashes.get(&endpoint.network) {
+            Some(hash) => {
+                let id = next_id;
+                next_id += 1;
+                match timed_rpc_http(
+                    &client,
+                    &endpoint.url,
+                    "chain_getBlock",
+                    json!([hash]),
+                    id,
+                    Duration::from_secs(timeouts.block_zero_secs),
+                )
+                .await
+                {
+                    Ok((secs, value)) if is_block_zero_response(&value) => Some(secs),
+                    Ok((_, value)) => {
+                        errors.push(CheckError {
+                            kind: "blockzero",
+                            message: format!("unexpected block response: {value}"),
+                        });
+                        None
+                    }
+                    Err(err) => {
+                        errors.push(CheckError {
+                            kind: "blockzero",
+                            message: err.to_string(),
+                        });
+                        None
+                    }
+                }
+            }
+            None => {
+                skipped.push("blockzero");
+                None
+            }
+        },
     };
 
-    // Single chain_getBlock(latest) -> latency + height (header.number),
-    // no separate chain_getHeader round trip needed.
+    // Latest block -> latency + height, in one round trip.
     let (get_block_secs, block_height) = {
         let id = next_id;
         next_id += 1;
+        let (method, params) = match endpoint.flavor {
+            Flavor::Eth => ("eth_getBlockByNumber", json!(["latest", false])),
+            Flavor::Substrate => ("chain_getBlock", json!([])),
+        };
         match timed_rpc_http(
             &client,
             &endpoint.url,
-            "chain_getBlock",
-            json!([]),
+            method,
+            params,
             id,
             Duration::from_secs(timeouts.get_block_secs),
         )
         .await
         {
-            Ok((secs, value)) => match block_response_height(&value) {
-                Some(height) => (Some(secs), Some(height)),
-                None => {
-                    errors.push(CheckError {
-                        kind: "getblock",
-                        message: format!("unexpected latest block response (no height): {value}"),
-                    });
-                    (None, None)
+            Ok((secs, value)) => {
+                let height = match endpoint.flavor {
+                    Flavor::Eth => latest_block_height(&value),
+                    Flavor::Substrate => block_response_height(&value),
+                };
+                match height {
+                    Some(height) => (Some(secs), Some(height)),
+                    None => {
+                        errors.push(CheckError {
+                            kind: "getblock",
+                            message: format!(
+                                "unexpected latest block response (no height): {value}"
+                            ),
+                        });
+                        (None, None)
+                    }
                 }
-            },
+            }
             Err(err) => {
                 errors.push(CheckError {
                     kind: "getblock",
@@ -1846,7 +1918,7 @@ async fn check_endpoint_http(
         match timed_rpc_http(
             &client,
             &endpoint.url,
-            "system_version",
+            version_method,
             json!([]),
             id,
             Duration::from_secs(timeouts.version_secs),
@@ -2112,12 +2184,17 @@ fn block_response_height(value: &Value) -> Option<u64> {
         .and_then(parse_hex_u64)
 }
 
-#[allow(dead_code)]
+/// Block height from an Ethereum `eth_getBlockByNumber` result (`.number`,
+/// a 0x-hex quantity). Also used to detect the genesis block (height 0).
 fn latest_block_height(value: &Value) -> Option<u64> {
     value
         .pointer("/number")
         .and_then(Value::as_str)
         .and_then(parse_hex_u64)
+}
+
+fn is_eth_block_zero_response(value: &Value) -> bool {
+    latest_block_height(value).is_some_and(|height| height == 0)
 }
 
 fn parse_hex_u64(value: &str) -> Option<u64> {
@@ -2243,6 +2320,7 @@ d"#
                     network: "polkadot".to_owned(),
                     zone: "us-east".to_owned(),
                     transport: Transport::Ws,
+                    flavor: Flavor::Substrate,
                     provider: None,
                 },
                 Endpoint {
@@ -2250,6 +2328,7 @@ d"#
                     network: "kusama".to_owned(),
                     zone: "eu-central".to_owned(),
                     transport: Transport::Ws,
+                    flavor: Flavor::Substrate,
                     provider: None,
                 },
                 Endpoint {
@@ -2257,6 +2336,7 @@ d"#
                     network: "polkadot".to_owned(),
                     zone: "eu-central".to_owned(),
                     transport: Transport::Ws,
+                    flavor: Flavor::Substrate,
                     provider: None,
                 },
             ],
@@ -2328,6 +2408,7 @@ d"#
                     network: "polkadot".to_owned(),
                     zone: "eu-central".to_owned(),
                     transport: Transport::Ws,
+                    flavor: Flavor::Substrate,
                     provider: None,
                 },
                 block_zero_secs: None,
@@ -2345,6 +2426,7 @@ d"#
                     network: "polkadot".to_owned(),
                     zone: "eu-central".to_owned(),
                     transport: Transport::Ws,
+                    flavor: Flavor::Substrate,
                     provider: None,
                 },
                 block_zero_secs: None,
@@ -2362,6 +2444,7 @@ d"#
                     network: "kusama".to_owned(),
                     zone: "eu-central".to_owned(),
                     transport: Transport::Ws,
+                    flavor: Flavor::Substrate,
                     provider: None,
                 },
                 block_zero_secs: None,
@@ -2387,6 +2470,7 @@ d"#
             network: "polkadot-bulletin".to_owned(),
             zone: "eu-central".to_owned(),
             transport: Transport::Ws,
+            flavor: Flavor::Substrate,
             provider: None,
         };
         let result = check_endpoint(
@@ -2414,6 +2498,7 @@ d"#
                 network: "polkadot-bulletin".to_owned(),
                 zone: "us-east".to_owned(),
                 transport: Transport::Ws,
+                flavor: Flavor::Substrate,
                 provider: None,
             },
             block_zero_secs: None,
@@ -2440,6 +2525,7 @@ d"#
                 network: "polkadot".to_owned(),
                 zone: "us-east".to_owned(),
                 transport: Transport::Http,
+                flavor: Flavor::Substrate,
                 provider: None,
             },
             block_zero_secs: None,
@@ -2457,6 +2543,7 @@ d"#
                 network: "polkadot".to_owned(),
                 zone: "us-east".to_owned(),
                 transport: Transport::Ws,
+                flavor: Flavor::Substrate,
                 provider: None,
             },
             block_zero_secs: None,
