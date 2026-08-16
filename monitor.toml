@@ -1,6 +1,6 @@
 output_path = "/var/www/prom/index.txt"
 lock_path = "/tmp/rpc-monitor.lock"
-concurrency = 8
+concurrency = 1
 
 [timeouts]
 connect_secs = 5
