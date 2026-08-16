@@ -3,7 +3,7 @@ use std::{
     ffi::OsString,
     fs::{self, File, OpenOptions},
     path::{Path, PathBuf},
-    sync::Arc,
+    sync::{Arc, Mutex},
     time::{Duration, Instant, SystemTime, UNIX_EPOCH},
 };
 
@@ -17,9 +17,14 @@ use serde_json::{json, Value};
 use tokio::net::{lookup_host, TcpStream};
 use tokio::time::timeout;
 use tokio_rustls::{rustls::RootCertStore, TlsConnector};
-use tokio_tungstenite::{client_async, connect_async, tungstenite::Message};
+use tokio_tungstenite::{
+    client_async, connect_async, tungstenite::Message, MaybeTlsStream, WebSocketStream,
+};
 use tracing::{error, info, warn};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
+
+/// Reused websocket connection for the per-endpoint JSON-RPC checks.
+type WsStream = WebSocketStream<MaybeTlsStream<TcpStream>>;
 
 #[derive(Parser, Debug)]
 #[command(
@@ -160,11 +165,81 @@ impl Default for Timeouts {
     }
 }
 
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Deserialize)]
+#[serde(rename_all = "lowercase")]
+enum Transport {
+    /// Websocket JSON-RPC (ws:// or wss://). The default.
+    #[default]
+    Ws,
+    /// HTTP JSON-RPC (https://) over HTTP/2 or HTTP/1.1.
+    Http,
+    /// HTTP JSON-RPC over HTTP/3 (QUIC). Requires a QUIC-capable server.
+    Http3,
+}
+
+impl Transport {
+    fn as_str(&self) -> &'static str {
+        match self {
+            Transport::Ws => "ws",
+            Transport::Http => "http",
+            Transport::Http3 => "http3",
+        }
+    }
+}
+
+/// JSON-RPC dialect an endpoint speaks. Substrate nodes use `chain_*`/`system_*`;
+/// EVM proxies (e.g. Asset Hub `eth-rpc`) speak the Ethereum `eth_*` methods.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Deserialize)]
+#[serde(rename_all = "lowercase")]
+enum Flavor {
+    /// Substrate JSON-RPC (`chain_getBlock`, `system_version`). The default.
+    #[default]
+    Substrate,
+    /// Ethereum JSON-RPC (`eth_getBlockByNumber`, `web3_clientVersion`).
+    Eth,
+}
+
+/// HTTP version a server actually answered on. The `http` transport is
+/// HTTP/3-optimistic, so the negotiated version is only known after a
+/// response has been received.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum HttpVersion {
+    H3,
+    H2,
+    Http11,
+}
+
+impl HttpVersion {
+    /// Anything older than HTTP/1.1 is not something a JSON-RPC endpoint is
+    /// expected to answer on, so it is left unreported rather than given its
+    /// own label value.
+    fn from_response(version: reqwest::Version) -> Option<Self> {
+        match version {
+            reqwest::Version::HTTP_3 => Some(HttpVersion::H3),
+            reqwest::Version::HTTP_2 => Some(HttpVersion::H2),
+            reqwest::Version::HTTP_11 => Some(HttpVersion::Http11),
+            _ => None,
+        }
+    }
+
+    fn as_str(&self) -> &'static str {
+        match self {
+            HttpVersion::H3 => "h3",
+            HttpVersion::H2 => "h2",
+            HttpVersion::Http11 => "http1.1",
+        }
+    }
+}
+
 #[derive(Clone, Debug, Deserialize)]
 struct Endpoint {
     url: String,
     network: String,
     zone: String,
+    #[serde(default)]
+    transport: Transport,
+    #[serde(default)]
+    flavor: Flavor,
     #[allow(dead_code)]
     provider: Option<String>,
 }
@@ -177,6 +252,8 @@ struct EndpointResult {
     block_height: Option<u64>,
     connect_secs: Option<f64>,
     version: Option<String>,
+    /// Negotiated HTTP version, for http transports only.
+    http_version: Option<HttpVersion>,
     errors: Vec<CheckError>,
     skipped: Vec<&'static str>,
 }
@@ -320,8 +397,20 @@ fn validate_config(config: &Config, require_zone: bool) -> Result<()> {
         bail!("concurrency must be greater than zero");
     }
     for endpoint in &config.endpoints {
-        if !endpoint.url.starts_with("ws://") && !endpoint.url.starts_with("wss://") {
-            bail!("endpoint {} must start with ws:// or wss://", endpoint.url);
+        let scheme_ok = match endpoint.transport {
+            Transport::Ws => {
+                endpoint.url.starts_with("ws://") || endpoint.url.starts_with("wss://")
+            }
+            Transport::Http | Transport::Http3 => {
+                endpoint.url.starts_with("http://") || endpoint.url.starts_with("https://")
+            }
+        };
+        if !scheme_ok {
+            bail!(
+                "endpoint {} scheme does not match transport {:?} (ws needs ws:// or wss://; http/http3 need http:// or https://)",
+                endpoint.url,
+                endpoint.transport
+            );
         }
         if endpoint.network.trim().is_empty() || endpoint.zone.trim().is_empty() {
             bail!("endpoint {} has an empty network or zone", endpoint.url);
@@ -575,8 +664,12 @@ fn endpoint_url_parts(url: &str) -> Result<EndpointUrlParts> {
         ("wss", rest, 443)
     } else if let Some(rest) = url.strip_prefix("ws://") {
         ("ws", rest, 80)
+    } else if let Some(rest) = url.strip_prefix("https://") {
+        ("https", rest, 443)
+    } else if let Some(rest) = url.strip_prefix("http://") {
+        ("http", rest, 80)
     } else {
-        bail!("endpoint {url} must start with ws:// or wss://");
+        bail!("endpoint {url} must start with ws://, wss://, http:// or https://");
     };
     let authority = rest.split('/').next().unwrap_or(rest);
 
@@ -1167,46 +1260,99 @@ async fn check_endpoint(
     zero_hashes: HashMap<String, String>,
     timeouts: Timeouts,
 ) -> EndpointResult {
+    match endpoint.transport {
+        Transport::Ws => check_endpoint_ws(endpoint, zero_hashes, timeouts).await,
+        Transport::Http | Transport::Http3 => check_endpoint_http(endpoint, zero_hashes, timeouts).await,
+    }
+}
+
+async fn check_endpoint_ws(
+    endpoint: Endpoint,
+    zero_hashes: HashMap<String, String>,
+    timeouts: Timeouts,
+) -> EndpointResult {
     let mut errors = Vec::new();
     let mut skipped = Vec::new();
 
-    let connect_secs =
-        match timed_connect(&endpoint.url, Duration::from_secs(timeouts.connect_secs)).await {
-            Ok(secs) => Some(secs),
+    // Open one websocket connection per endpoint and reuse it for every
+    // JSON-RPC call in this check. Per-call timings (rpc_getblock,
+    // rpc_getblockzero, ...) then measure RPC latency instead of the
+    // TCP+TLS+websocket handshake, which is reported once as rpc_connect.
+    let (connect_secs, mut socket) =
+        match connect_ws(&endpoint.url, Duration::from_secs(timeouts.connect_secs)).await {
+            Ok((secs, socket)) => (Some(secs), socket),
             Err(err) => {
+                let message = err.to_string();
                 errors.push(CheckError {
                     kind: "connect",
-                    message: err.to_string(),
+                    message: message.clone(),
                 });
-                None
+                if zero_hashes.contains_key(&endpoint.network) {
+                    errors.push(CheckError {
+                        kind: "blockzero",
+                        message: message.clone(),
+                    });
+                } else {
+                    skipped.push("blockzero");
+                }
+                errors.push(CheckError {
+                    kind: "getblock",
+                    message: message.clone(),
+                });
+                errors.push(CheckError {
+                    kind: "height",
+                    message: message.clone(),
+                });
+                errors.push(CheckError {
+                    kind: "version",
+                    message,
+                });
+                return EndpointResult {
+                    endpoint,
+                    block_zero_secs: None,
+                    get_block_secs: None,
+                    block_height: None,
+                    connect_secs: None,
+                    version: None,
+                    http_version: None,
+                    errors,
+                    skipped,
+                };
             }
         };
 
+    let mut next_id: u64 = 1;
+
     let block_zero_secs = match zero_hashes.get(&endpoint.network) {
-        Some(hash) => match timed_rpc_call(
-            &endpoint.url,
-            "chain_getBlock",
-            json!([hash]),
-            Duration::from_secs(timeouts.block_zero_secs),
-        )
-        .await
-        {
-            Ok((secs, value)) if is_block_zero_response(&value) => Some(secs),
-            Ok((_, value)) => {
-                errors.push(CheckError {
-                    kind: "blockzero",
-                    message: format!("unexpected block response: {value}"),
-                });
-                None
+        Some(hash) => {
+            let id = next_id;
+            next_id += 1;
+            match timed_rpc_over(
+                &mut socket,
+                "chain_getBlock",
+                json!([hash]),
+                id,
+                Duration::from_secs(timeouts.block_zero_secs),
+            )
+            .await
+            {
+                Ok((secs, value)) if is_block_zero_response(&value) => Some(secs),
+                Ok((_, value)) => {
+                    errors.push(CheckError {
+                        kind: "blockzero",
+                        message: format!("unexpected block response: {value}"),
+                    });
+                    None
+                }
+                Err(err) => {
+                    errors.push(CheckError {
+                        kind: "blockzero",
+                        message: err.to_string(),
+                    });
+                    None
+                }
             }
-            Err(err) => {
-                errors.push(CheckError {
-                    kind: "blockzero",
-                    message: err.to_string(),
-                });
-                None
-            }
-        },
+        }
         // Some networks, such as bulletin chains, are not expected to be archive
         // endpoints. If no zero hash is configured, skip this check and emit
         // rpc_error{error="blockzero"} = 0 so dashboards treat it as healthy.
@@ -1216,84 +1362,73 @@ async fn check_endpoint(
         }
     };
 
-    let get_block_secs = match timed_rpc_call(
-        &endpoint.url,
-        "chain_getBlock",
-        json!([]),
-        Duration::from_secs(timeouts.get_block_secs),
-    )
-    .await
-    {
-        Ok((secs, value)) if block_response_height(&value).is_some() => Some(secs),
-        Ok((_, value)) => {
-            errors.push(CheckError {
-                kind: "getblock",
-                message: format!("unexpected latest block response: {value}"),
-            });
-            None
-        }
-        Err(err) => {
-            errors.push(CheckError {
-                kind: "getblock",
-                message: err.to_string(),
-            });
-            None
-        }
-    };
-
-    let block_height = match timed_rpc_call(
-        &endpoint.url,
-        "chain_getHeader",
-        json!([]),
-        Duration::from_secs(timeouts.block_height_secs),
-    )
-    .await
-    {
-        Ok((_, value)) => match latest_block_height(&value) {
-            Some(height) => Some(height),
-            None => {
+    // A single chain_getBlock(latest) gives us both the full-block RPC latency
+    // AND the current block height (chain_getBlock returns block.header.number),
+    // so there is no need for a separate chain_getHeader round trip.
+    let (get_block_secs, block_height) = {
+        let id = next_id;
+        next_id += 1;
+        match timed_rpc_over(
+            &mut socket,
+            "chain_getBlock",
+            json!([]),
+            id,
+            Duration::from_secs(timeouts.get_block_secs),
+        )
+        .await
+        {
+            Ok((secs, value)) => match block_response_height(&value) {
+                Some(height) => (Some(secs), Some(height)),
+                None => {
+                    errors.push(CheckError {
+                        kind: "getblock",
+                        message: format!("unexpected latest block response (no height): {value}"),
+                    });
+                    (None, None)
+                }
+            },
+            Err(err) => {
                 errors.push(CheckError {
-                    kind: "height",
-                    message: format!("unexpected latest header response: {value}"),
+                    kind: "getblock",
+                    message: err.to_string(),
                 });
-                None
+                (None, None)
             }
-        },
-        Err(err) => {
-            errors.push(CheckError {
-                kind: "height",
-                message: err.to_string(),
-            });
-            None
         }
     };
 
-    let version = match timed_rpc_call(
-        &endpoint.url,
-        "system_version",
-        json!([]),
-        Duration::from_secs(timeouts.version_secs),
-    )
-    .await
-    {
-        Ok((_, value)) => match value.as_str() {
-            Some(version) if !version.trim().is_empty() => Some(version.to_owned()),
-            _ => {
+    let version = {
+        let id = next_id;
+        match timed_rpc_over(
+            &mut socket,
+            "system_version",
+            json!([]),
+            id,
+            Duration::from_secs(timeouts.version_secs),
+        )
+        .await
+        {
+            Ok((_, value)) => match value.as_str() {
+                Some(version) if !version.trim().is_empty() => Some(version.to_owned()),
+                _ => {
+                    errors.push(CheckError {
+                        kind: "version",
+                        message: format!("unexpected version response: {value}"),
+                    });
+                    None
+                }
+            },
+            Err(err) => {
                 errors.push(CheckError {
                     kind: "version",
-                    message: format!("unexpected version response: {value}"),
+                    message: err.to_string(),
                 });
                 None
             }
-        },
-        Err(err) => {
-            errors.push(CheckError {
-                kind: "version",
-                message: err.to_string(),
-            });
-            None
         }
     };
+
+    let _ = socket.close(None).await;
 
     EndpointResult {
         endpoint,
@@ -1302,43 +1437,44 @@ async fn check_endpoint(
         block_height,
         connect_secs,
         version,
+        http_version: None,
         errors,
         skipped,
     }
 }
 
-async fn timed_connect(url: &str, deadline: Duration) -> Result<f64> {
+async fn connect_ws(url: &str, deadline: Duration) -> Result<(f64, WsStream)> {
     let started = Instant::now();
     let connect = timeout(deadline, connect_async(url))
         .await
         .with_context(|| format!("timeout after {}s", deadline.as_secs()))?;
-    let (mut socket, _) = connect.with_context(|| format!("websocket connect failed for {url}"))?;
-    let elapsed = started.elapsed().as_secs_f64();
-    let _ = socket.close(None).await;
-    Ok(elapsed)
+    let (socket, _) = connect.with_context(|| format!("websocket connect failed for {url}"))?;
+    Ok((started.elapsed().as_secs_f64(), socket))
 }
 
-async fn timed_rpc_call(
-    url: &str,
+async fn timed_rpc_over(
+    socket: &mut WsStream,
     method: &str,
     params: Value,
+    id: u64,
     deadline: Duration,
 ) -> Result<(f64, Value)> {
     let started = Instant::now();
-    let response = timeout(deadline, rpc_call(url, method, params))
+    let response = timeout(deadline, rpc_call_over(socket, method, params, id))
         .await
         .with_context(|| format!("{method} timeout after {}s", deadline.as_secs()))??;
     Ok((started.elapsed().as_secs_f64(), response))
 }
 
-async fn rpc_call(url: &str, method: &str, params: Value) -> Result<Value> {
-    let (mut socket, _) = connect_async(url)
-        .await
-        .with_context(|| format!("websocket connect failed for {url}"))?;
-
+async fn rpc_call_over(
+    socket: &mut WsStream,
+    method: &str,
+    params: Value,
+    id: u64,
+) -> Result<Value> {
     let request = json!({
         "jsonrpc": "2.0",
-        "id": 1,
+        "id": id,
         "method": method,
         "params": params,
     });
@@ -1353,7 +1489,7 @@ async fn rpc_call(url: &str, method: &str, params: Value) -> Result<Value> {
             Message::Text(text) => {
                 let value: Value = serde_json::from_str(&text)
                     .with_context(|| format!("invalid JSON-RPC response for {method}: {text}"))?;
-                if value.get("id") != Some(&json!(1)) {
+                if value.get("id") != Some(&json!(id)) {
                     continue;
                 }
                 if let Some(error) = value.get("error") {
@@ -1370,6 +1506,456 @@ async fn rpc_call(url: &str, method: &str, params: Value) -> Result<Value> {
     }
 
     bail!("{method} connection closed before response")
+}
+
+/// Build a reqwest client for the given HTTP transport.
+/// HTTP client pair for browser-style optimistic HTTP/3:
+/// - `h3`: QUIC/HTTP/3 client (http3_prior_knowledge) used first.
+/// - `h2`: regular HTTP/2+HTTP/1.1 client, used as fallback.
+/// `optimistic` controls whether an HTTP/3 failure falls back to h2 (true) or
+/// is reported as an error (false — explicit `http3` transport).
+struct HttpClient {
+    h3: Option<reqwest::Client>,
+    h2: reqwest::Client,
+    optimistic: bool,
+    /// HTTP version of the most recent response, so the monitor can report
+    /// whether QUIC actually won or the h2/h1 fallback was used.
+    negotiated: Mutex<Option<HttpVersion>>,
+    /// Set once an optimistic HTTP/3 attempt has failed, so the remaining
+    /// checks for this endpoint go straight to h2/h1 instead of paying the
+    /// QUIC probe budget again.
+    h3_unusable: Mutex<bool>,
+}
+
+/// How long an optimistic HTTP/3 attempt may take before the h2/h1 fallback is
+/// used. QUIC failures are frequently silent (UDP/443 blackholed rather than
+/// refused), so the attempt has to be bounded rather than waited out.
+const H3_PROBE_BUDGET: Duration = Duration::from_millis(1500);
+
+impl HttpClient {
+    fn observe_version(&self, version: reqwest::Version) {
+        if let Some(version) = HttpVersion::from_response(version) {
+            *self.negotiated.lock().expect("negotiated version lock") = Some(version);
+        }
+    }
+
+    fn negotiated_version(&self) -> Option<HttpVersion> {
+        *self.negotiated.lock().expect("negotiated version lock")
+    }
+
+    /// The HTTP/3 client to try for the next request, if HTTP/3 is worth
+    /// attempting at all.
+    fn h3_to_try(&self) -> Option<&reqwest::Client> {
+        let unusable = *self.h3_unusable.lock().expect("h3 state lock");
+        if unusable {
+            return None;
+        }
+        self.h3.as_ref()
+    }
+
+    fn mark_h3_unusable(&self) {
+        *self.h3_unusable.lock().expect("h3 state lock") = true;
+    }
+}
+
+fn http_client(transport: Transport) -> Result<HttpClient> {
+    let h2 = reqwest::Client::builder()
+        .build()
+        .with_context(|| format!("failed to build HTTP/2 client for {transport:?}"))?;
+    let (h3, optimistic) = match transport {
+        // HTTP/3-optimistic, like a browser: try QUIC first, fall back to h2/h1.
+        Transport::Http => (
+            Some(
+                reqwest::Client::builder()
+                    .http3_prior_knowledge()
+                    .build()
+                    .with_context(|| "failed to build HTTP/3 client".to_string())?,
+            ),
+            true,
+        ),
+        // Force HTTP/3 only (no fallback) — for explicit http3 endpoints.
+        Transport::Http3 => (
+            Some(
+                reqwest::Client::builder()
+                    .http3_prior_knowledge()
+                    .build()
+                    .with_context(|| "failed to build HTTP/3 client".to_string())?,
+            ),
+            false,
+        ),
+        Transport::Ws => (None, false),
+    };
+    Ok(HttpClient {
+        h3,
+        h2,
+        optimistic,
+        negotiated: Mutex::new(None),
+        h3_unusable: Mutex::new(false),
+    })
+}
+
+async fn timed_rpc_http(
+    client: &HttpClient,
+    url: &str,
+    method: &str,
+    params: Value,
+    id: u64,
+    deadline: Duration,
+) -> Result<(f64, Value)> {
+    // The configured deadline is the budget for the request that actually
+    // answers, so an optimistic QUIC probe that has to be abandoned does not
+    // eat into it.
+    let budget = if client.optimistic && client.h3_to_try().is_some() {
+        deadline + H3_PROBE_BUDGET
+    } else {
+        deadline
+    };
+    timeout(budget, rpc_call_http(client, url, method, params, id))
+        .await
+        .with_context(|| format!("{method} timeout after {}s", deadline.as_secs()))?
+}
+
+/// Send one JSON-RPC request and return the duration of the attempt that
+/// actually answered, so a dead-end QUIC probe is not charged to the reported
+/// latency.
+async fn rpc_call_http(
+    client: &HttpClient,
+    url: &str,
+    method: &str,
+    params: Value,
+    id: u64,
+) -> Result<(f64, Value)> {
+    let request = json!({
+        "jsonrpc": "2.0",
+        "id": id,
+        "method": method,
+        "params": params,
+    });
+
+    // Try to send on the HTTP/3 (QUIC) client first, then fall back to h2/h1
+    // when optimistic (browser-like). For the forced http3 transport, an h3
+    // failure is a hard error.
+    //
+    // reqwest only dispatches to its HTTP/3 client when the request itself is
+    // marked HTTP/3; http3_prior_knowledge() alone just sets the ALPN
+    // preference and the request would silently go out over HTTP/2 or
+    // HTTP/1.1.
+    let started = Instant::now();
+    let response = match client.h3_to_try() {
+        Some(h3) => {
+            let attempt = h3
+                .post(url)
+                .version(reqwest::Version::HTTP_3)
+                .json(&request)
+                .send();
+            // A forced http3 endpoint waits out the caller's deadline; an
+            // optimistic one only spends the probe budget before falling back,
+            // because blackholed UDP never returns an error on its own.
+            let attempt = if client.optimistic {
+                match timeout(H3_PROBE_BUDGET, attempt).await {
+                    Ok(result) => result.map_err(|err| anyhow!(err)),
+                    Err(_) => Err(anyhow!(
+                        "no HTTP/3 response within {}ms",
+                        H3_PROBE_BUDGET.as_millis()
+                    )),
+                }
+            } else {
+                attempt.await.map_err(|err| anyhow!(err))
+            };
+
+            match attempt {
+                Ok(resp) => resp,
+                Err(h3_err) => {
+                    if client.optimistic {
+                        client.mark_h3_unusable();
+                        let fallback_started = Instant::now();
+                        let resp = client
+                            .h2
+                            .post(url)
+                            .json(&request)
+                            .send()
+                            .await
+                            .with_context(|| {
+                                format!("failed to send {method} http request to {url} (h3 then h2 fallback failed: {h3_err})")
+                            })?;
+                        // Only the fallback attempt counts towards the timing.
+                        return finish_http_response(client, resp, url, method, fallback_started)
+                            .await;
+                    }
+                    return Err(h3_err).with_context(|| {
+                        format!("failed to send {method} http3 request to {url}")
+                    });
+                }
+            }
+        }
+        None => client
+            .h2
+            .post(url)
+            .json(&request)
+            .send()
+            .await
+            .with_context(|| format!("failed to send {method} http request to {url}"))?,
+    };
+    finish_http_response(client, response, url, method, started).await
+}
+
+async fn finish_http_response(
+    client: &HttpClient,
+    response: reqwest::Response,
+    url: &str,
+    method: &str,
+    started: Instant,
+) -> Result<(f64, Value)> {
+    client.observe_version(response.version());
+    let status = response.status();
+    if !status.is_success() {
+        bail!("{method} http request to {url} returned status {status}");
+    }
+    let value: Value = response
+        .json()
+        .await
+        .with_context(|| format!("invalid JSON-RPC http response for {method}"))?;
+    if let Some(error) = value.get("error") {
+        bail!("{method} returned JSON-RPC error: {error}");
+    }
+    let result = value
+        .get("result")
+        .cloned()
+        .ok_or_else(|| anyhow!("{method} http response did not include result"))?;
+    Ok((started.elapsed().as_secs_f64(), result))
+}
+
+async fn check_endpoint_http(
+    endpoint: Endpoint,
+    zero_hashes: HashMap<String, String>,
+    timeouts: Timeouts,
+) -> EndpointResult {
+    let mut errors = Vec::new();
+    let mut skipped = Vec::new();
+
+    let client = match http_client(endpoint.transport) {
+        Ok(client) => client,
+        Err(err) => {
+            errors.push(CheckError {
+                kind: "connect",
+                message: err.to_string(),
+            });
+            return EndpointResult {
+                endpoint,
+                block_zero_secs: None,
+                get_block_secs: None,
+                block_height: None,
+                connect_secs: None,
+                version: None,
+                http_version: None,
+                errors,
+                skipped,
+            };
+        }
+    };
+
+    let mut next_id: u64 = 1;
+
+    // Per-flavor method names: substrate nodes speak chain_*/system_*, EVM
+    // proxies (eth-rpc) speak eth_*/web3_*.
+    let (connect_method, version_method) = match endpoint.flavor {
+        Flavor::Eth => ("eth_chainId", "web3_clientVersion"),
+        Flavor::Substrate => ("system_health", "system_version"),
+    };
+
+    // Connect probe: the first request establishes the QUIC/HTTP connection, so
+    // a lightweight call times connection setup. Only the timing is reported
+    // (as rpc_connect); the result is discarded.
+    let connect_secs = {
+        let id = next_id;
+        next_id += 1;
+        match timed_rpc_http(
+            &client,
+            &endpoint.url,
+            connect_method,
+            json!([]),
+            id,
+            Duration::from_secs(timeouts.connect_secs),
+        )
+        .await
+        {
+            Ok((secs, _)) => Some(secs),
+            Err(err) => {
+                errors.push(CheckError {
+                    kind: "connect",
+                    message: err.to_string(),
+                });
+                None
+            }
+        }
+    };
+
+    let block_zero_secs = match endpoint.flavor {
+        // EVM: eth_getBlockByNumber("0x0") — no genesis hash lookup needed.
+        Flavor::Eth => {
+            let id = next_id;
+            next_id += 1;
+            match timed_rpc_http(
+                &client,
+                &endpoint.url,
+                "eth_getBlockByNumber",
+                json!(["0x0", false]),
+                id,
+                Duration::from_secs(timeouts.block_zero_secs),
+            )
+            .await
+            {
+                Ok((secs, value)) if is_eth_block_zero_response(&value) => Some(secs),
+                // EVM proxies (Asset Hub eth-rpc) don't expose the substrate
+                // genesis as eth block 0 — a null result means "no genesis
+                // here", so skip the probe rather than flag an error.
+                Ok((_, value)) if value.is_null() => {
+                    skipped.push("blockzero");
+                    None
+                }
+                Ok((_, value)) => {
+                    errors.push(CheckError {
+                        kind: "blockzero",
+                        message: format!("unexpected eth block 0 response: {value}"),
+                    });
+                    None
+                }
+                Err(err) => {
+                    errors.push(CheckError {
+                        kind: "blockzero",
+                        message: err.to_string(),
+                    });
+                    None
+                }
+            }
+        }
+        Flavor::Substrate => match zero_hashes.get(&endpoint.network) {
+            Some(hash) => {
+                let id = next_id;
+                next_id += 1;
+                match timed_rpc_http(
+                    &client,
+                    &endpoint.url,
+                    "chain_getBlock",
+                    json!([hash]),
+                    id,
+                    Duration::from_secs(timeouts.block_zero_secs),
+                )
+                .await
+                {
+                    Ok((secs, value)) if is_block_zero_response(&value) => Some(secs),
+                    Ok((_, value)) => {
+                        errors.push(CheckError {
+                            kind: "blockzero",
+                            message: format!("unexpected block response: {value}"),
+                        });
+                        None
+                    }
+                    Err(err) => {
+                        errors.push(CheckError {
+                            kind: "blockzero",
+                            message: err.to_string(),
+                        });
+                        None
+                    }
+                }
+            }
+            None => {
+                skipped.push("blockzero");
+                None
+            }
+        },
+    };
+
+    // Latest block -> latency + height, in one round trip.
+    let (get_block_secs, block_height) = {
+        let id = next_id;
+        next_id += 1;
+        let (method, params) = match endpoint.flavor {
+            Flavor::Eth => ("eth_getBlockByNumber", json!(["latest", false])),
+            Flavor::Substrate => ("chain_getBlock", json!([])),
+        };
+        match timed_rpc_http(
+            &client,
+            &endpoint.url,
+            method,
+            params,
+            id,
+            Duration::from_secs(timeouts.get_block_secs),
+        )
+        .await
+        {
+            Ok((secs, value)) => {
+                let height = match endpoint.flavor {
+                    Flavor::Eth => latest_block_height(&value),
+                    Flavor::Substrate => block_response_height(&value),
+                };
+                match height {
+                    Some(height) => (Some(secs), Some(height)),
+                    None => {
+                        errors.push(CheckError {
+                            kind: "getblock",
+                            message: format!(
+                                "unexpected latest block response (no height): {value}"
+                            ),
+                        });
+                        (None, None)
+                    }
+                }
+            }
+            Err(err) => {
+                errors.push(CheckError {
+                    kind: "getblock",
+                    message: err.to_string(),
+                });
+                (None, None)
+            }
+        }
+    };
+
+    let version = {
+        let id = next_id;
+        match timed_rpc_http(
+            &client,
+            &endpoint.url,
+            version_method,
+            json!([]),
+            id,
+            Duration::from_secs(timeouts.version_secs),
+        )
+        .await
+        {
+            Ok((_, value)) => match value.as_str() {
+                Some(version) if !version.trim().is_empty() => Some(version.to_owned()),
+                _ => {
+                    errors.push(CheckError {
+                        kind: "version",
+                        message: format!("unexpected version response: {value}"),
+                    });
+                    None
+                }
+            },
+            Err(err) => {
+                errors.push(CheckError {
+                    kind: "version",
+                    message: err.to_string(),
+                });
+                None
+            }
+        }
+    };
+
+    EndpointResult {
+        endpoint,
+        block_zero_secs,
+        get_block_secs,
+        block_height,
+        connect_secs,
+        version,
+        http_version: client.negotiated_version(),
+        errors,
+        skipped,
+    }
 }
 
 fn render_prometheus(
@@ -1484,6 +2070,23 @@ fn render_prometheus(
     }
 
     out.push('\n');
+    out.push_str("# HELP rpc_httpversion negotiated HTTP version, exposed as a label\n");
+    out.push_str("# TYPE rpc_httpversion gauge\n");
+    for result in results {
+        if let Some(http_version) = result.http_version {
+            push_metric(
+                &mut out,
+                "rpc_httpversion",
+                &result.endpoint,
+                zone,
+                &[("http_version", http_version.as_str())],
+                1.0,
+                timestamp_ms,
+            );
+        }
+    }
+
+    out.push('\n');
     out.push_str("# HELP rpc_error rpc-error\n");
     out.push_str("# TYPE rpc_error gauge\n");
     for result in results {
@@ -1551,10 +2154,11 @@ fn push_metric(
     out.push_str(name);
     out.push('{');
     out.push_str(&format!(
-        "wss=\"{}\",network=\"{}\",zone=\"{}\"",
+        "wss=\"{}\",network=\"{}\",zone=\"{}\",transport=\"{}\"",
         escape_label(&endpoint.url),
         escape_label(&endpoint.network),
-        escape_label(zone)
+        escape_label(zone),
+        endpoint.transport.as_str()
     ));
     for (key, label_value) in extra_labels {
         out.push_str(&format!(",{}=\"{}\"", key, escape_label(label_value)));
@@ -1580,11 +2184,17 @@ fn block_response_height(value: &Value) -> Option<u64> {
         .and_then(parse_hex_u64)
 }
 
+/// Block height from an Ethereum `eth_getBlockByNumber` result (`.number`,
+/// a 0x-hex quantity). Also used to detect the genesis block (height 0).
 fn latest_block_height(value: &Value) -> Option<u64> {
     value
         .pointer("/number")
         .and_then(Value::as_str)
         .and_then(parse_hex_u64)
+}
+
+fn is_eth_block_zero_response(value: &Value) -> bool {
+    latest_block_height(value).is_some_and(|height| height == 0)
 }
 
 fn parse_hex_u64(value: &str) -> Option<u64> {
@@ -1709,18 +2319,24 @@ d"#
                     url: "wss://z.example".to_owned(),
                     network: "polkadot".to_owned(),
                     zone: "us-east".to_owned(),
+                    transport: Transport::Ws,
+                    flavor: Flavor::Substrate,
                     provider: None,
                 },
                 Endpoint {
                     url: "wss://b.example".to_owned(),
                     network: "kusama".to_owned(),
                     zone: "eu-central".to_owned(),
+                    transport: Transport::Ws,
+                    flavor: Flavor::Substrate,
                     provider: None,
                 },
                 Endpoint {
                     url: "wss://a.example".to_owned(),
                     network: "polkadot".to_owned(),
                     zone: "eu-central".to_owned(),
+                    transport: Transport::Ws,
+                    flavor: Flavor::Substrate,
                     provider: None,
                 },
             ],
@@ -1791,6 +2407,8 @@ d"#
                     url: "wss://a.example".to_owned(),
                     network: "polkadot".to_owned(),
                     zone: "eu-central".to_owned(),
+                    transport: Transport::Ws,
+                    flavor: Flavor::Substrate,
                     provider: None,
                 },
                 block_zero_secs: None,
@@ -1798,6 +2416,7 @@ d"#
                 block_height: Some(10),
                 connect_secs: None,
                 version: None,
+                http_version: None,
                 errors: Vec::new(),
                 skipped: Vec::new(),
             },
@@ -1806,6 +2425,8 @@ d"#
                     url: "wss://b.example".to_owned(),
                     network: "polkadot".to_owned(),
                     zone: "eu-central".to_owned(),
+                    transport: Transport::Ws,
+                    flavor: Flavor::Substrate,
                     provider: None,
                 },
                 block_zero_secs: None,
@@ -1813,6 +2434,7 @@ d"#
                 block_height: Some(15),
                 connect_secs: None,
                 version: None,
+                http_version: None,
                 errors: Vec::new(),
                 skipped: Vec::new(),
             },
@@ -1821,6 +2443,8 @@ d"#
                     url: "wss://c.example".to_owned(),
                     network: "kusama".to_owned(),
                     zone: "eu-central".to_owned(),
+                    transport: Transport::Ws,
+                    flavor: Flavor::Substrate,
                     provider: None,
                 },
                 block_zero_secs: None,
@@ -1828,6 +2452,7 @@ d"#
                 block_height: Some(7),
                 connect_secs: None,
                 version: None,
+                http_version: None,
                 errors: Vec::new(),
                 skipped: Vec::new(),
             },
@@ -1844,6 +2469,8 @@ d"#
             url: "wss://example.invalid".to_owned(),
             network: "polkadot-bulletin".to_owned(),
             zone: "eu-central".to_owned(),
+            transport: Transport::Ws,
+            flavor: Flavor::Substrate,
             provider: None,
         };
         let result = check_endpoint(
@@ -1870,6 +2497,8 @@ d"#
                 url: "wss://bulletin.example".to_owned(),
                 network: "polkadot-bulletin".to_owned(),
                 zone: "us-east".to_owned(),
+                transport: Transport::Ws,
+                flavor: Flavor::Substrate,
                 provider: None,
             },
             block_zero_secs: None,
@@ -1877,14 +2506,80 @@ d"#
             block_height: None,
             connect_secs: None,
             version: None,
+            http_version: None,
             errors: Vec::new(),
             skipped: vec!["blockzero"],
         };
 
         let metrics = render_prometheus("us-east", 123, 1.0, &[result]);
         assert!(metrics.contains(
-            "rpc_error{wss=\"wss://bulletin.example\",network=\"polkadot-bulletin\",zone=\"us-east\",error=\"blockzero\"} 0.000000 123"
+            "rpc_error{wss=\"wss://bulletin.example\",network=\"polkadot-bulletin\",zone=\"us-east\",transport=\"ws\",error=\"blockzero\"} 0.000000 123"
         ));
+    }
+
+    #[test]
+    fn renders_negotiated_http_version_for_http_endpoints() {
+        let http = EndpointResult {
+            endpoint: Endpoint {
+                url: "https://polkadot.example".to_owned(),
+                network: "polkadot".to_owned(),
+                zone: "us-east".to_owned(),
+                transport: Transport::Http,
+                flavor: Flavor::Substrate,
+                provider: None,
+            },
+            block_zero_secs: None,
+            get_block_secs: None,
+            block_height: None,
+            connect_secs: Some(0.1),
+            version: None,
+            http_version: Some(HttpVersion::H2),
+            errors: Vec::new(),
+            skipped: Vec::new(),
+        };
+        let ws = EndpointResult {
+            endpoint: Endpoint {
+                url: "wss://polkadot.example".to_owned(),
+                network: "polkadot".to_owned(),
+                zone: "us-east".to_owned(),
+                transport: Transport::Ws,
+                flavor: Flavor::Substrate,
+                provider: None,
+            },
+            block_zero_secs: None,
+            get_block_secs: None,
+            block_height: None,
+            connect_secs: Some(0.1),
+            version: None,
+            http_version: None,
+            errors: Vec::new(),
+            skipped: Vec::new(),
+        };
+
+        let metrics = render_prometheus("us-east", 123, 1.0, &[http, ws]);
+        assert!(metrics.contains(
+            "rpc_httpversion{wss=\"https://polkadot.example\",network=\"polkadot\",zone=\"us-east\",transport=\"http\",http_version=\"h2\"} 1.000000 123"
+        ));
+        // Websocket endpoints have no HTTP version to report.
+        assert!(!metrics.contains("rpc_httpversion{wss=\"wss://polkadot.example\""));
+    }
+
+    #[test]
+    fn maps_response_http_versions_to_labels() {
+        assert_eq!(
+            HttpVersion::from_response(reqwest::Version::HTTP_3).map(|v| v.as_str()),
+            Some("h3")
+        );
+        assert_eq!(
+            HttpVersion::from_response(reqwest::Version::HTTP_2).map(|v| v.as_str()),
+            Some("h2")
+        );
+        assert_eq!(
+            HttpVersion::from_response(reqwest::Version::HTTP_11).map(|v| v.as_str()),
+            Some("http1.1")
+        );
+        // Pre-1.1 responses are not reported at all.
+        assert_eq!(HttpVersion::from_response(reqwest::Version::HTTP_10), None);
     }
 
     #[test]

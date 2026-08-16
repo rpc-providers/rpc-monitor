@@ -20,16 +20,46 @@ Public metric endpoints:
 
 ## What It Measures
 
-Each configured endpoint is checked over its websocket JSON-RPC interface.
+Each configured endpoint is checked over its JSON-RPC interface, either
+websocket (`ws`/`wss`, the default) or HTTP (`http`/`https`), or both when the
+endpoint is listed twice with a different `transport`. Metrics from every
+transport carry a `transport` label (`ws`, `http` or `http3`) so dashboards can
+show websocket and HTTP values side by side.
 
-- `rpc_connect`: DNS, TCP, TLS and websocket handshake duration.
+- `rpc_connect`: for websocket, DNS, TCP, TLS and websocket handshake duration.
+  For http, the first request (`system_health`) which establishes the HTTP/2 or
+  HTTP/3 connection.
 - `rpc_getblockzero`: duration of `chain_getBlock` for the configured genesis block hash.
 - `rpc_getblock`: duration of `chain_getBlock` for the latest block.
-- `rpc_blockheight`: latest observed block height from `chain_getHeader`.
+- `rpc_blockheight`: latest observed block height parsed from `chain_getBlock`.
 - `rpc_blockdrift`: difference between this endpoint's observed height and the highest observed height for the same network during the same run.
 - `rpc_version`: node version from `system_version`, exposed as a label.
+- `rpc_httpversion`: for http transports, the HTTP version the endpoint
+  actually answered on, exposed as an `http_version` label (`h3`, `h2` or
+  `http1.1`).
 - `rpc_error`: per-check error state.
 - `rpc_script`: total monitor run duration.
+
+The `http` transport is HTTP/3-optimistic (browser-style): it tries QUIC first
+and falls back to HTTP/2/HTTP/1.1 on failure. The explicit `http3` transport
+forces QUIC with no fallback. Because `transport="http"` covers both outcomes,
+`rpc_httpversion` is what tells you whether QUIC actually won:
+
+```promql
+rpc_httpversion{zone=~"$zone",network=~"$network"}
+count by (http_version) (rpc_httpversion)
+```
+
+QUIC failures are usually silent — UDP/443 is blackholed rather than refused —
+so the optimistic HTTP/3 attempt is bounded at 1.5s before the h2/h1 fallback
+is used, and the fallback is then reused for the rest of that endpoint's
+checks. Only the attempt that actually answers is charged to the reported
+latency, and the configured timeouts apply to that attempt, so an abandoned
+QUIC probe does not inflate `rpc_connect` or cause spurious timeouts.
+
+A ready-to-import Grafana dashboard that mirrors
+the [rpc-providers.net](https://monitor.rpc-providers.net/) dashboard and adds
+HTTP values is provided at `deploy/grafana/rpc-providers-ws-http.json`.
 
 `rpc_error` values:
 
@@ -135,14 +165,34 @@ url = "wss://polkadot-rpc.n.dwellir.com"
 network = "polkadot"
 zone = "eu-central"
 provider = "Dwellir"
+
+# Same endpoint over HTTP JSON-RPC, so websocket AND http are both measured.
+[[endpoints]]
+url = "https://polkadot-rpc.n.dwellir.com"
+network = "polkadot"
+zone = "eu-central"
+transport = "http"   # or "http3" to force QUIC without fallback
+provider = "Dwellir"
 ```
 
 Field meanings:
 
-- `url`: websocket endpoint to check.
+- `url`: endpoint to check (`ws://`, `wss://`, `http://` or `https://`).
 - `network`: logical network name used in Prometheus labels and drift grouping.
 - `zone`: monitor zone this endpoint belongs to.
+- `transport`: optional, `ws` (default), `http`, or `http3`. `http` is
+  HTTP/3-optimistic with HTTP/2/HTTP/1.1 fallback; `http3` forces QUIC.
+- `flavor`: optional JSON-RPC dialect, `substrate` (default) or `eth`. `eth`
+  is for EVM proxies such as Asset Hub `eth-rpc` — the checks use the Ethereum
+  methods (`eth_getBlockByNumber`, `web3_clientVersion`) instead of the
+  substrate ones. Block-zero is skipped for `eth` endpoints that don't expose
+  a genesis block.
 - `provider`: optional provider label for humans and future tooling.
+
+To offer both protocols for an endpoint, list it twice with the matching
+schemes (`wss://` + `https://`) and `transport` values. The included
+`monitor.toml` does this for every member endpoint whose HTTPS JSON-RPC
+endpoint was verified working.
 
 The same `monitor.toml` can be deployed to all monitor nodes. Select the local
 zone at startup with `--zone` or `RPC_MONITOR_ZONE`.
