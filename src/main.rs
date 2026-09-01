@@ -676,8 +676,8 @@ async fn run_report(config: &Config, args: &ReportCommand) -> Result<()> {
 
     let mean_connect = fetch_global_stat(&client, "rpc_connect", "avg", &period).await?;
     let stddev_connect = fetch_global_stat(&client, "rpc_connect", "stddev", &period).await?;
-    let mean_block = fetch_global_stat(&client, "rpc_getblockzero", "avg", &period).await?;
-    let stddev_block = fetch_global_stat(&client, "rpc_getblockzero", "stddev", &period).await?;
+    let mean_block = fetch_global_stat(&client, "rpc_getblock", "avg", &period).await?;
+    let stddev_block = fetch_global_stat(&client, "rpc_getblock", "stddev", &period).await?;
 
     println!(
         "- **Connect Time**: Avg = {} s (Std Dev = {} s)",
@@ -702,7 +702,7 @@ async fn run_report(config: &Config, args: &ReportCommand) -> Result<()> {
 
     for endpoint in endpoints {
         let connect_latency = fetch_latency(&client, "rpc_connect", &endpoint, &period).await?;
-        let block_latency = fetch_latency(&client, "rpc_getblockzero", &endpoint, &period).await?;
+        let block_latency = fetch_latency(&client, "rpc_getblock", &endpoint, &period).await?;
         let uptime = fetch_uptime(&client, &endpoint, &period).await?;
         let binary_version = fetch_version(&client, &endpoint, &period).await?;
         let rpc_calls = if let (Some(chain), Some(job)) = (
@@ -998,7 +998,7 @@ async fn fetch_uptime(
     period: &ReportPeriod,
 ) -> Result<Option<f64>> {
     let query = format!(
-        "(1 - avg_over_time(rpc_error{{wss=\"{}\",zone=\"{}\",network=\"{}\",error=\"blockzero\"}}[{}])) * 100",
+        "(1 - avg_over_time(rpc_error{{wss=\"{}\",zone=\"{}\",network=\"{}\",error=\"getblock\"}}[{}])) * 100",
         escape_label(&endpoint.url),
         escape_label(&endpoint.zone),
         escape_label(&endpoint.network),

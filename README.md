@@ -232,11 +232,12 @@ period from `2026-02-01T00:00:00Z` through `2026-06-21T00:00:00Z`.
 
 Month reports use the actual calendar month length for Prometheus ranges, so
 February uses 28 or 29 days, 30-day months use 30 days and 31-day months use 31
-days. Uptime is calculated from `avg_over_time(rpc_error{error="blockzero"})`
-rather than a fixed sample count. Endpoints with no report data in the selected
-period are omitted, which keeps historical reports from showing newly added
-endpoints as all-`N/A` rows. The report table shows compact endpoint URLs as
-`scheme://host`; the full configured URL is still used for Prometheus queries.
+days. Report block retrieval time uses `rpc_getblock`, and uptime is calculated
+from `avg_over_time(rpc_error{error="getblock"})` rather than a fixed sample
+count. Endpoints with no report data in the selected period are omitted, which
+keeps historical reports from showing newly added endpoints as all-`N/A` rows.
+The report table shows compact endpoint URLs as `scheme://host`; the full
+configured URL is still used for Prometheus queries.
 
 ## IP Checks
 
