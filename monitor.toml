@@ -204,3 +204,9 @@ provider = "gatotech"
 # network = "polkadot-assethub-eth"
 # zone = "eu-central"
 # provider = "Gatotech"
+
+[[endpoints]]
+url = "wss://asset-hub.selvagelabs.io"
+network = "polkadot-assethub"
+zone = "us-east"
+provider = "Selvage Labs"
