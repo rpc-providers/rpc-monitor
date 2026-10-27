@@ -21,6 +21,11 @@ use tokio_tungstenite::{client_async, connect_async, tungstenite::Message};
 use tracing::{error, info, warn};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
 
+const ARCHIVE_BLOCK_NUMBER: u64 = 1000;
+// Substrate's well-known :code storage key works across historical layouts.
+// Request its storage hash, not the large runtime Wasm value.
+const RUNTIME_CODE_KEY: &str = "0x3a636f6465";
+
 #[derive(Parser, Debug)]
 #[command(
     version,
@@ -111,8 +116,6 @@ struct Config {
     #[serde(default)]
     timeouts: Timeouts,
     #[serde(default)]
-    zero_hashes: HashMap<String, String>,
-    #[serde(default)]
     report: ReportConfig,
     endpoints: Vec<Endpoint>,
 }
@@ -138,8 +141,8 @@ impl Default for ReportConfig {
 struct Timeouts {
     #[serde(default = "default_connect_secs")]
     connect_secs: u64,
-    #[serde(default = "default_block_zero_secs")]
-    block_zero_secs: u64,
+    #[serde(default = "default_archive_secs", alias = "block_zero_secs")]
+    archive_secs: u64,
     #[serde(default = "default_get_block_secs")]
     get_block_secs: u64,
     #[serde(default = "default_block_height_secs")]
@@ -152,7 +155,7 @@ impl Default for Timeouts {
     fn default() -> Self {
         Self {
             connect_secs: default_connect_secs(),
-            block_zero_secs: default_block_zero_secs(),
+            archive_secs: default_archive_secs(),
             get_block_secs: default_get_block_secs(),
             block_height_secs: default_block_height_secs(),
             version_secs: default_version_secs(),
@@ -172,14 +175,31 @@ struct Endpoint {
 #[derive(Debug)]
 struct EndpointResult {
     endpoint: Endpoint,
-    block_zero_secs: Option<f64>,
+    archive_status: ArchiveStatus,
     get_block_secs: Option<f64>,
     block_height: Option<u64>,
     connect_secs: Option<f64>,
     version: Option<String>,
     errors: Vec<CheckError>,
-    skipped: Vec<&'static str>,
 }
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum ArchiveStatus {
+    Unknown = -1,
+    Pruned = 0,
+    Archive = 1,
+}
+
+#[derive(Debug)]
+struct RpcResponseError(Value);
+
+impl std::fmt::Display for RpcResponseError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "JSON-RPC error: {}", self.0)
+    }
+}
+
+impl std::error::Error for RpcResponseError {}
 
 #[derive(Clone, Debug)]
 struct CheckError {
@@ -1137,38 +1157,31 @@ fn normalize_version(version: &str) -> String {
 }
 
 async fn run_checks(config: &Config, endpoints: Vec<Endpoint>) -> Vec<EndpointResult> {
-    let zero_hashes = config.zero_hashes.clone();
     let timeouts = Timeouts {
         connect_secs: config.timeouts.connect_secs,
-        block_zero_secs: config.timeouts.block_zero_secs,
+        archive_secs: config.timeouts.archive_secs,
         get_block_secs: config.timeouts.get_block_secs,
         block_height_secs: config.timeouts.block_height_secs,
         version_secs: config.timeouts.version_secs,
     };
 
     futures_util::stream::iter(endpoints.into_iter().map(|endpoint| {
-        let zero_hashes = zero_hashes.clone();
         let timeouts = Timeouts {
             connect_secs: timeouts.connect_secs,
-            block_zero_secs: timeouts.block_zero_secs,
+            archive_secs: timeouts.archive_secs,
             get_block_secs: timeouts.get_block_secs,
             block_height_secs: timeouts.block_height_secs,
             version_secs: timeouts.version_secs,
         };
-        async move { check_endpoint(endpoint, zero_hashes, timeouts).await }
+        async move { check_endpoint(endpoint, timeouts).await }
     }))
     .buffer_unordered(config.concurrency)
     .collect()
     .await
 }
 
-async fn check_endpoint(
-    endpoint: Endpoint,
-    zero_hashes: HashMap<String, String>,
-    timeouts: Timeouts,
-) -> EndpointResult {
+async fn check_endpoint(endpoint: Endpoint, timeouts: Timeouts) -> EndpointResult {
     let mut errors = Vec::new();
-    let mut skipped = Vec::new();
 
     let connect_secs =
         match timed_connect(&endpoint.url, Duration::from_secs(timeouts.connect_secs)).await {
@@ -1182,39 +1195,8 @@ async fn check_endpoint(
             }
         };
 
-    let block_zero_secs = match zero_hashes.get(&endpoint.network) {
-        Some(hash) => match timed_rpc_call(
-            &endpoint.url,
-            "chain_getBlock",
-            json!([hash]),
-            Duration::from_secs(timeouts.block_zero_secs),
-        )
-        .await
-        {
-            Ok((secs, value)) if is_block_zero_response(&value) => Some(secs),
-            Ok((_, value)) => {
-                errors.push(CheckError {
-                    kind: "blockzero",
-                    message: format!("unexpected block response: {value}"),
-                });
-                None
-            }
-            Err(err) => {
-                errors.push(CheckError {
-                    kind: "blockzero",
-                    message: err.to_string(),
-                });
-                None
-            }
-        },
-        // Some networks, such as bulletin chains, are not expected to be archive
-        // endpoints. If no zero hash is configured, skip this check and emit
-        // rpc_error{error="blockzero"} = 0 so dashboards treat it as healthy.
-        None => {
-            skipped.push("blockzero");
-            None
-        }
-    };
+    let archive_status =
+        check_archive(&endpoint.url, Duration::from_secs(timeouts.archive_secs)).await;
 
     let get_block_secs = match timed_rpc_call(
         &endpoint.url,
@@ -1297,14 +1279,67 @@ async fn check_endpoint(
 
     EndpointResult {
         endpoint,
-        block_zero_secs,
+        archive_status,
         get_block_secs,
         block_height,
         connect_secs,
         version,
         errors,
-        skipped,
     }
+}
+
+async fn check_archive(url: &str, deadline: Duration) -> ArchiveStatus {
+    let result = timeout(deadline, probe_archive(url)).await;
+    match result {
+        Ok(Ok(status)) => status,
+        Ok(Err(err)) => {
+            info!(wss = url, reason = %err, "archive classification unknown");
+            ArchiveStatus::Unknown
+        }
+        Err(_) => {
+            info!(wss = url, "archive classification unknown: timeout");
+            ArchiveStatus::Unknown
+        }
+    }
+}
+
+async fn probe_archive(url: &str) -> Result<ArchiveStatus> {
+    let hash = rpc_call(url, "chain_getBlockHash", json!([ARCHIVE_BLOCK_NUMBER])).await?;
+    let hash = hash
+        .as_str()
+        .filter(|hash| is_hash(hash))
+        .ok_or_else(|| anyhow!("block {ARCHIVE_BLOCK_NUMBER} hash missing or invalid"))?;
+
+    match rpc_call(url, "state_getStorageHash", json!([RUNTIME_CODE_KEY, hash])).await {
+        Ok(value) if value.as_str().is_some_and(is_hash) => Ok(ArchiveStatus::Archive),
+        Ok(value) => bail!("historical :code storage hash missing or invalid: {value}"),
+        Err(err) if is_pruned_state_error(&err) => Ok(ArchiveStatus::Pruned),
+        Err(err) => Err(err),
+    }
+}
+
+fn is_pruned_state_error(error: &anyhow::Error) -> bool {
+    let Some(error) = error.downcast_ref::<RpcResponseError>() else {
+        return false;
+    };
+    // Only explicit historical-state errors, never transport errors, a missing
+    // block hash, method-not-found, or a generic JSON-RPC server error.
+    let text = format!("{} {}", error.0["message"], error.0["data"]).to_ascii_lowercase();
+    [
+        "state already discarded",
+        "state has been pruned",
+        "state is pruned",
+        "state is not available",
+        "state not available",
+    ]
+    .iter()
+    .any(|message| text.contains(message))
+}
+
+fn is_hash(hash: &str) -> bool {
+    hash.starts_with("0x")
+        && hash.len() == 66
+        && hash[2..].bytes().all(|byte| byte.is_ascii_hexdigit())
 }
 
 async fn timed_connect(url: &str, deadline: Duration) -> Result<f64> {
@@ -1357,7 +1392,7 @@ async fn rpc_call(url: &str, method: &str, params: Value) -> Result<Value> {
                     continue;
                 }
                 if let Some(error) = value.get("error") {
-                    bail!("{method} returned JSON-RPC error: {error}");
+                    return Err(RpcResponseError(error.clone()).into());
                 }
                 return value
                     .get("result")
@@ -1379,20 +1414,18 @@ fn render_prometheus(
     results: &[EndpointResult],
 ) -> String {
     let mut out = String::new();
-    out.push_str("# HELP rpc_getblockzero time to get block 0\n");
-    out.push_str("# TYPE rpc_getblockzero gauge\n");
+    out.push_str("# HELP rpc_archive_status Historical state at block 1000: 1 archive, 0 pruned, -1 unknown\n");
+    out.push_str("# TYPE rpc_archive_status gauge\n");
     for result in results {
-        if let Some(value) = result.block_zero_secs {
-            push_metric(
-                &mut out,
-                "rpc_getblockzero",
-                &result.endpoint,
-                zone,
-                &[],
-                value,
-                timestamp_ms,
-            );
-        }
+        push_metric(
+            &mut out,
+            "rpc_archive_status",
+            &result.endpoint,
+            zone,
+            &[],
+            result.archive_status as i8 as f64,
+            timestamp_ms,
+        );
     }
 
     out.push('\n');
@@ -1487,18 +1520,9 @@ fn render_prometheus(
     out.push_str("# HELP rpc_error rpc-error\n");
     out.push_str("# TYPE rpc_error gauge\n");
     for result in results {
-        for error_kind in [
-            "blockzero",
-            "connect",
-            "code",
-            "getblock",
-            "height",
-            "version",
-        ] {
+        for error_kind in ["connect", "code", "getblock", "height", "version"] {
             let value = if result.errors.iter().any(|error| error.kind == error_kind) {
                 1.0
-            } else if result.skipped.contains(&error_kind) {
-                0.0
             } else {
                 0.0
             };
@@ -1567,10 +1591,6 @@ fn escape_label(value: &str) -> String {
         .replace('\\', r"\\")
         .replace('\n', r"\n")
         .replace('"', r#"\""#)
-}
-
-fn is_block_zero_response(value: &Value) -> bool {
-    block_response_height(value).is_some_and(|height| height == 0)
 }
 
 fn block_response_height(value: &Value) -> Option<u64> {
@@ -1663,7 +1683,7 @@ fn default_connect_secs() -> u64 {
     5
 }
 
-fn default_block_zero_secs() -> u64 {
+fn default_archive_secs() -> u64 {
     20
 }
 
@@ -1702,7 +1722,6 @@ d"#
             lock_path: PathBuf::from("monitor.lock"),
             concurrency: 1,
             timeouts: Timeouts::default(),
-            zero_hashes: HashMap::new(),
             report: ReportConfig::default(),
             endpoints: vec![
                 Endpoint {
@@ -1733,24 +1752,116 @@ d"#
     }
 
     #[test]
-    fn validates_block_zero_response() {
-        let response = json!({
-            "block": {
-                "header": {
-                    "number": "0x0"
-                }
-            }
-        });
-        assert!(is_block_zero_response(&response));
+    fn validates_storage_and_block_hashes() {
+        assert!(is_hash(&format!("0x{}", "ab".repeat(32))));
+        for invalid in ["", "0x", "0x3e8", "1000", &format!("0x{}", "zz".repeat(32))] {
+            assert!(!is_hash(invalid));
+        }
+    }
 
-        let wrong_block = json!({
-            "block": {
-                "header": {
-                    "number": "0x1"
+    #[test]
+    fn only_explicit_rpc_state_errors_mean_pruned() {
+        for message in [
+            "UnknownBlock: State already discarded for 0x123",
+            "State has been pruned",
+            "State is not available",
+        ] {
+            let error: anyhow::Error = RpcResponseError(
+                json!({"code": -32000, "message": "Client error", "data": message}),
+            )
+            .into();
+            assert!(is_pruned_state_error(&error));
+        }
+        for message in [
+            "Method not found",
+            "Unknown block",
+            "timeout",
+            "Internal error",
+        ] {
+            let error: anyhow::Error =
+                RpcResponseError(json!({"code": -32000, "message": message})).into();
+            assert!(!is_pruned_state_error(&error));
+        }
+        assert!(!is_pruned_state_error(&anyhow!(
+            "State already discarded: transport failure"
+        )));
+    }
+
+    #[test]
+    fn legacy_archive_timeout_is_accepted() {
+        let old: Timeouts = toml::from_str("block_zero_secs = 7").unwrap();
+        let new: Timeouts = toml::from_str("archive_secs = 9").unwrap();
+        assert_eq!(old.archive_secs, 7);
+        assert_eq!(new.archive_secs, 9);
+    }
+
+    async fn archive_probe_responses(responses: Vec<Value>) -> Result<ArchiveStatus> {
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let url = format!("ws://{}", listener.local_addr().unwrap());
+        let server = tokio::spawn(async move {
+            for (index, response) in responses.into_iter().enumerate() {
+                let (stream, _) = listener.accept().await.unwrap();
+                let mut socket = tokio_tungstenite::accept_async(stream).await.unwrap();
+                let request = socket.next().await.unwrap().unwrap();
+                let request: Value = serde_json::from_str(request.to_text().unwrap()).unwrap();
+                if index == 0 {
+                    assert_eq!(request["method"], "chain_getBlockHash");
+                    assert_eq!(request["params"], json!([1000]));
+                } else {
+                    assert_eq!(request["method"], "state_getStorageHash");
+                    assert_eq!(request["params"][0], RUNTIME_CODE_KEY);
+                    assert_eq!(request["params"][1], format!("0x{}", "ab".repeat(32)));
                 }
+                socket
+                    .send(Message::Text(response.to_string().into()))
+                    .await
+                    .unwrap();
             }
         });
-        assert!(!is_block_zero_response(&wrong_block));
+        let result = timeout(Duration::from_secs(3), probe_archive(&url))
+            .await
+            .unwrap();
+        server.await.unwrap();
+        result
+    }
+
+    #[tokio::test]
+    async fn archive_probe_checks_hash_and_historical_state() {
+        let hash = json!({"jsonrpc": "2.0", "id": 1, "result": format!("0x{}", "ab".repeat(32))});
+        assert_eq!(
+            archive_probe_responses(vec![
+                hash.clone(),
+                json!({"id":1,"result":format!("0x{}", "cd".repeat(32))})
+            ])
+            .await
+            .unwrap(),
+            ArchiveStatus::Archive
+        );
+        assert_eq!(
+            archive_probe_responses(vec![
+                hash.clone(),
+                json!({"id":1,"error":{"code":-32000,"message":"State already discarded"}})
+            ])
+            .await
+            .unwrap(),
+            ArchiveStatus::Pruned
+        );
+        for value in [Value::Null, json!("0xe9030000"), json!("0xgarbage")] {
+            assert!(
+                archive_probe_responses(vec![hash.clone(), json!({"id":1,"result":value})])
+                    .await
+                    .is_err()
+            );
+        }
+        assert!(archive_probe_responses(vec![json!({"id":1,"result":null})])
+            .await
+            .is_err());
+        assert!(archive_probe_responses(vec![
+            hash,
+            json!({"id":1,"error":{"code":-32601,"message":"Method not found"}})
+        ])
+        .await
+        .is_err());
     }
 
     #[test]
@@ -1793,13 +1904,12 @@ d"#
                     zone: "eu-central".to_owned(),
                     provider: None,
                 },
-                block_zero_secs: None,
+                archive_status: ArchiveStatus::Unknown,
                 get_block_secs: None,
                 block_height: Some(10),
                 connect_secs: None,
                 version: None,
                 errors: Vec::new(),
-                skipped: Vec::new(),
             },
             EndpointResult {
                 endpoint: Endpoint {
@@ -1808,13 +1918,12 @@ d"#
                     zone: "eu-central".to_owned(),
                     provider: None,
                 },
-                block_zero_secs: None,
+                archive_status: ArchiveStatus::Unknown,
                 get_block_secs: None,
                 block_height: Some(15),
                 connect_secs: None,
                 version: None,
                 errors: Vec::new(),
-                skipped: Vec::new(),
             },
             EndpointResult {
                 endpoint: Endpoint {
@@ -1823,13 +1932,12 @@ d"#
                     zone: "eu-central".to_owned(),
                     provider: None,
                 },
-                block_zero_secs: None,
+                archive_status: ArchiveStatus::Unknown,
                 get_block_secs: None,
                 block_height: Some(7),
                 connect_secs: None,
                 version: None,
                 errors: Vec::new(),
-                skipped: Vec::new(),
             },
         ];
 
@@ -1839,7 +1947,7 @@ d"#
     }
 
     #[tokio::test]
-    async fn missing_zero_hash_does_not_create_blockzero_error() {
+    async fn unavailable_endpoint_has_unknown_archive_status_without_archive_error() {
         let endpoint = Endpoint {
             url: "wss://example.invalid".to_owned(),
             network: "polkadot-bulletin".to_owned(),
@@ -1848,10 +1956,9 @@ d"#
         };
         let result = check_endpoint(
             endpoint,
-            HashMap::new(),
             Timeouts {
                 connect_secs: 0,
-                block_zero_secs: 0,
+                archive_secs: 0,
                 get_block_secs: 0,
                 block_height_secs: 0,
                 version_secs: 0,
@@ -1860,11 +1967,13 @@ d"#
         .await;
 
         assert!(!result.errors.iter().any(|err| err.kind == "blockzero"));
-        assert!(result.skipped.contains(&"blockzero"));
+        assert!(!result.errors.iter().any(|err| err.kind == "archive"));
+        assert_eq!(result.archive_status, ArchiveStatus::Unknown);
+        assert!(result.errors.iter().any(|err| err.kind == "connect"));
     }
 
     #[test]
-    fn skipped_blockzero_renders_as_zero_error_value() {
+    fn archive_status_is_separate_from_errors() {
         let result = EndpointResult {
             endpoint: Endpoint {
                 url: "wss://bulletin.example".to_owned(),
@@ -1872,19 +1981,20 @@ d"#
                 zone: "us-east".to_owned(),
                 provider: None,
             },
-            block_zero_secs: None,
+            archive_status: ArchiveStatus::Pruned,
             get_block_secs: None,
             block_height: None,
             connect_secs: None,
             version: None,
             errors: Vec::new(),
-            skipped: vec!["blockzero"],
         };
 
         let metrics = render_prometheus("us-east", 123, 1.0, &[result]);
         assert!(metrics.contains(
-            "rpc_error{wss=\"wss://bulletin.example\",network=\"polkadot-bulletin\",zone=\"us-east\",error=\"blockzero\"} 0.000000 123"
+            "rpc_archive_status{wss=\"wss://bulletin.example\",network=\"polkadot-bulletin\",zone=\"us-east\"} 0.000000 123"
         ));
+        assert!(!metrics.contains("rpc_getblockzero"));
+        assert!(!metrics.contains("error=\"blockzero\""));
     }
 
     #[test]

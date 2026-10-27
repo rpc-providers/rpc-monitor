@@ -5,6 +5,23 @@ All notable changes to RPC Monitor are recorded here. Releases use
 
 ## [Unreleased]
 
+### Added
+
+- Dashboard migration utility creates a separate archive-status preview,
+  replacing block-zero timings/errors with latest-block metrics and uptime.
+
+### Changed
+
+- Replace genesis-block checks with the historical `:code` storage hash at block
+  1000 for all endpoints, including Bulletin, using `state_getStorageHash` to
+  avoid historical pallet-key differences and large runtime downloads.
+  New `rpc_archive_status` gauge:
+  1 archive, 0 explicitly pruned, -1 unknown. Classification is not an error;
+  connection/latest-block/height/version errors remain unchanged.
+- Stop emitting `rpc_getblockzero` and `rpc_error{error="blockzero"}`. Genesis
+  hash lists are no longer needed. `archive_secs` configures the total probe
+  deadline; legacy `block_zero_secs` remains accepted as an alias.
+
 ## [1.1.0] - 2026-09-01
 
 ### Added

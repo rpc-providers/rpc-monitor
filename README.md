@@ -23,7 +23,7 @@ Public metric endpoints:
 Each configured endpoint is checked over its websocket JSON-RPC interface.
 
 - `rpc_connect`: DNS, TCP, TLS and websocket handshake duration.
-- `rpc_getblockzero`: duration of `chain_getBlock` for the configured genesis block hash.
+- `rpc_archive_status`: historical-state classification: `1` archive, `0` pruned, `-1` unknown.
 - `rpc_getblock`: duration of `chain_getBlock` for the latest block.
 - `rpc_blockheight`: latest observed block height from `chain_getHeader`.
 - `rpc_blockdrift`: difference between this endpoint's observed height and the highest observed height for the same network during the same run.
@@ -36,10 +36,15 @@ Each configured endpoint is checked over its websocket JSON-RPC interface.
 - `0`: OK
 - `1`: error
 
-`rpc_getblockzero` is only measured when the endpoint network has a matching
-entry in `[zero_hashes]`. If no zero hash is configured, the block-zero check is
-treated as OK in `rpc_error` instead of erroring. This is useful for
-non-archive endpoints or chains where genesis block retrieval is not required.
+Every endpoint, including Bulletin, is classified by querying the hash of block
+1000 and requesting `state_getStorageHash` for the well-known `:code` key
+(`0x3a636f6465`) at that hash. A valid storage hash means archive; an explicit
+discarded/pruned-state response means pruned. This avoids historical pallet-key
+layout differences and downloading the runtime Wasm itself.
+Timeouts, missing hashes, null values, unsupported methods and unexpected
+responses mean unknown. This is a practical indicator, not proof of all history.
+Classification never produces `rpc_error` or error-level logs. Normal connection,
+latest-block, height and version failures remain errors.
 
 ## Repository Layout
 
@@ -96,7 +101,7 @@ Timeouts:
 ```toml
 [timeouts]
 connect_secs = 5
-block_zero_secs = 20
+archive_secs = 20
 get_block_secs = 10
 block_height_secs = 10
 version_secs = 10
@@ -119,13 +124,10 @@ kusama-assethub = "asset-hub-kusama"
 `chain` labels used by `substrate_rpc_calls_started` in Prometheus. Endpoint
 `provider` values are used as the Prometheus `job` label for RPC call totals.
 
-Genesis block hashes used for `rpc_getblockzero`:
-
-```toml
-[zero_hashes]
-polkadot = "0x91b171bb158e2d3848fa23a9f1c25182fb8e20313b2c1eb49219da7a70ce90c3"
-kusama = "0xb0a8d493285c2df73290dfb7e61f870f17b41801197a149ca93654499ea3dafe"
-```
+`archive_secs` is the total timeout for the two archive-classification calls.
+Legacy `block_zero_secs` is accepted as an alias; `[zero_hashes]` is ignored
+and can be removed. `rpc_getblockzero` and `rpc_error{error="blockzero"}` are
+no longer emitted. Reports continue to use latest-block metrics.
 
 Endpoint entries:
 
@@ -403,17 +405,13 @@ Example queries:
 ```promql
 rpc_connect{zone=~"$zone",network=~"$network",wss=~"$wss"}
 rpc_getblock{zone=~"$zone",network=~"$network",wss=~"$wss"}
-rpc_getblockzero{zone=~"$zone",network=~"$network",wss=~"$wss"}
+rpc_archive_status{zone=~"$zone",network=~"$network",wss=~"$wss"}
 rpc_blockdrift{zone=~"$zone",network=~"$network",wss=~"$wss"}
 rpc_error{zone=~"$zone",network=~"$network",wss=~"$wss"}
 ```
 
 ## Adding Or Changing Endpoints
 
-Production deployment is a change and therefore requires explicit user
-confirmation before it is performed. Preparing and validating the change on
-`monitor.rpc-providers.net` is allowed; copying configuration or binaries to a
-`mon-*` host is not.
 
 1. Edit `monitor.toml`.
 2. Add or update the relevant `[[endpoints]]` entry.
@@ -469,11 +467,22 @@ Check DNS/IP reachability:
 Common causes of endpoint errors:
 
 - `connect`: DNS, TCP, TLS, websocket handshake, IPv4/IPv6 or routing problem.
-- `blockzero`: genesis block retrieval failed or endpoint is not archive-capable.
 - `getblock`: latest block retrieval failed.
 - `height`: latest header retrieval failed.
 - `version`: `system_version` failed.
 
-For endpoints where block-zero retrieval is not relevant, leave the network out
-of `[zero_hashes]`; the monitor will skip the block-zero request and emit
-`rpc_error{error="blockzero"} 0`.
+In Grafana, map `rpc_archive_status` values to Archive (1), Pruned (0), and
+Unknown (-1), using neutral colors for pruned/unknown. Remove block-zero alert
+queries when migrating dashboards. Historical block-zero data remains available
+in Prometheus until its normal retention expires.
+
+To prepare a separate preview from an exported RPC Providers dashboard:
+
+```bash
+python3 tools/prepare-archive-dashboard.py < dashboard.json > archive-preview.json
+```
+
+The generated import has a different UID and does not overwrite the original.
+It adds the archive column, removes block-zero error queries, and switches
+block timing and uptime to latest-block metrics. The archive column needs the
+new metric; missing data is shown as Not measured, not Pruned.
