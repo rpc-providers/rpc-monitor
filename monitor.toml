@@ -213,3 +213,14 @@ network = "polkadot-people"
 zone = "eu-central"
 provider = "NodeStake"
 
+[[endpoints]]
+url = "wss://asset-hub-polkadot.p.rpc.turboflakes.io"
+network = "polkadot-assethub"
+zone = "eu-central"
+provider = "Turboflakes"
+
+[[endpoints]]
+url = "wss://people-polkadot.p.rpc.turboflakes.io"
+network = "polkadot-people"
+zone = "eu-central"
+provider = "Turboflakes"
