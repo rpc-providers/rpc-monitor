@@ -68,6 +68,12 @@ zone = "eu-central"
 provider = "Helixstreet"
 
 [[endpoints]]
+url = "wss://rpc-bulletin-polkadot.helixstreet.io"
+network = "polkadot-bulletin"
+zone = "eu-central"
+provider = "Helixstreet"
+
+[[endpoints]]
 url = "wss://rpc-bulletin.luckyfriday.io"
 network = "polkadot-bulletin"
 zone = "us-east"
