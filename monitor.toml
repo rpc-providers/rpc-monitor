@@ -210,3 +210,15 @@ url = "wss://asset-hub.selvagelabs.io"
 network = "polkadot-assethub"
 zone = "us-east"
 provider = "Selvage Labs"
+[[endpoints]]
+url = "wss://rpc.assethub-polkadot.nodestake.org"
+network = "polkadot-assethub"
+zone = "eu-central"
+provider = "NodeStake"
+
+[[endpoints]]
+url = "wss://rpc.people-polkadot.nodestake.org"
+network = "polkadot-people"
+zone = "eu-central"
+provider = "NodeStake"
+
