@@ -77,6 +77,12 @@ zone = "us-east"
 provider = "Simply Staking"
 
 [[endpoints]]
+url = "wss://spectrum-03.spectrumnodes.xyz/RcHPQCOlyKRDTS/hmz0w-urDWa-2g/polkadotpeople/mn/1004/dedicated_polkadot/pruned/ws/"
+network = "polkadot-people"
+zone = "us-east"
+provider = "Simply Staking"
+
+[[endpoints]]
 url = "wss://spectrum-03.simplystaking.xyz/cG9sa2Fkb3QtMDMtOTFkMmYwZGYtcG9sa2Fkb3Q/9QbAeudedsupNA/polkadotbulletin/mainnet/"
 network = "polkadot-bulletin"
 zone = "us-east"
