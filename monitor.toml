@@ -119,6 +119,36 @@ zone = "eu-central"
 provider = "LinkPool"
 
 [[endpoints]]
+url = "wss://polkadot-mainnet-asset-hub-pruned.linkpool.com"
+network = "polkadot-assethub"
+zone = "eu-central"
+provider = "LinkPool"
+
+[[endpoints]]
+url = "wss://polkadot-mainnet-asset-hub-pruned-sec.linkpool.com"
+network = "polkadot-assethub"
+zone = "eu-central"
+provider = "LinkPool"
+
+[[endpoints]]
+url = "wss://polkadot-mainnet-people.linkpool.com"
+network = "polkadot-people"
+zone = "eu-central"
+provider = "LinkPool"
+
+[[endpoints]]
+url = "wss://polkadot-mainnet-people-sec.linkpool.com"
+network = "polkadot-people"
+zone = "eu-central"
+provider = "LinkPool"
+
+[[endpoints]]
+url = "wss://polkadot-mainnet-bulletin.linkpool.com"
+network = "polkadot-bulletin"
+zone = "eu-central"
+provider = "LinkPool"
+
+[[endpoints]]
 url = "wss://rpc.interweb-it.com/polkadot"
 network = "polkadot"
 zone = "eu-central"
