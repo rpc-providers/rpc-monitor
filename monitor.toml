@@ -125,6 +125,12 @@ zone = "eu-central"
 provider = "interweb"
 
 [[endpoints]]
+url = "wss://rpc.interweb-it.com/bulletin-polkadot"
+network = "polkadot-bulletin"
+zone = "eu-central"
+provider = "interweb"
+
+[[endpoints]]
 url = "wss://bridge-hub-polkadot.rotko.net"
 network = "polkadot-bridgehub"
 zone = "ap-southeast"
