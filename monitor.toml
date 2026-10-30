@@ -185,6 +185,18 @@ zone = "ap-southeast"
 provider = "Rotko"
 
 [[endpoints]]
+url = "wss://asset-hub-polkadot-rpc.rotko.net"
+network = "polkadot-assethub"
+zone = "ap-southeast"
+provider = "Rotko"
+
+[[endpoints]]
+url = "wss://bulletin-polkadot-rpc.rotko.net"
+network = "polkadot-bulletin"
+zone = "ap-southeast"
+provider = "Rotko"
+
+[[endpoints]]
 url = "wss://asset-hub-kusama.rotko.net"
 network = "kusama-assethub"
 zone = "ap-southeast"
