@@ -314,3 +314,39 @@ url = "wss://people-polkadot.p.rpc.turboflakes.io"
 network = "polkadot-people"
 zone = "eu-central"
 provider = "Turboflakes"
+
+[[endpoints]]
+url = "wss://polkadot-collectives-rpc.obis.dev"
+network = "polkadot-collectives"
+zone = "eu-central"
+provider = "HoneyStake"
+
+[[endpoints]]
+url = "wss://polkadot-assethub-rpc.obis.dev"
+network = "polkadot-assethub"
+zone = "eu-central"
+provider = "HoneyStake"
+
+[[endpoints]]
+url = "wss://polkadot-bridgehub-rpc.obis.dev"
+network = "polkadot-bridgehub"
+zone = "eu-central"
+provider = "HoneyStake"
+
+[[endpoints]]
+url = "wss://polkadot-people-rpc.obis.dev"
+network = "polkadot-people"
+zone = "eu-central"
+provider = "HoneyStake"
+
+[[endpoints]]
+url = "wss://polkadot-coretime-rpc.obis.dev"
+network = "polkadot-coretime"
+zone = "eu-central"
+provider = "HoneyStake"
+
+[[endpoints]]
+url = "wss://polkadot-bulletin-rpc.obis.dev"
+network = "polkadot-bulletin"
+zone = "eu-central"
+provider = "HoneyStake"
