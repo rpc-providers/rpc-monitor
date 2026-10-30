@@ -131,6 +131,18 @@ zone = "eu-central"
 provider = "stakeworld"
 
 [[endpoints]]
+url = "wss://rpc2-people-polkadot.stakeworld.io"
+network = "polkadot-people"
+zone = "eu-central"
+provider = "stakeworld"
+
+[[endpoints]]
+url = "wss://rpc3-people-polkadot.stakeworld.io"
+network = "polkadot-people"
+zone = "eu-central"
+provider = "stakeworld"
+
+[[endpoints]]
 url = "wss://rpc-kusama.helixstreet.io"
 network = "kusama"
 zone = "eu-central"
