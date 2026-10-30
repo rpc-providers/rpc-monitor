@@ -29,8 +29,32 @@ polkadot = "polkadot"
 kusama = "ksmcc3"
 
 [[endpoints]]
+url = "wss://bulletin-polkadot-rpc.n.dwellir.com"
+network = "polkadot-bulletin"
+zone = "eu-central"
+provider = "Dwellir"
+
+[[endpoints]]
 url = "wss://asset-hub-polkadot-rpc.n.dwellir.com"
 network = "polkadot-assethub"
+zone = "eu-central"
+provider = "Dwellir"
+
+[[endpoints]]
+url = "wss://asset-hub-polkadot-2-rpc.n.dwellir.com"
+network = "polkadot-assethub"
+zone = "eu-central"
+provider = "Dwellir"
+
+[[endpoints]]
+url = "wss://people-polkadot-rpc.n.dwellir.com"
+network = "polkadot-people"
+zone = "eu-central"
+provider = "Dwellir"
+
+[[endpoints]]
+url = "wss://people-polkadot-2-rpc.n.dwellir.com"
+network = "polkadot-people"
 zone = "eu-central"
 provider = "Dwellir"
 
