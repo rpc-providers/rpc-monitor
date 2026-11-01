@@ -159,7 +159,7 @@ provider = "Helixstreet"
 
 [[endpoints]]
 url = "wss://rpc-bulletin.luckyfriday.io"
-tenders = ["5C"]
+tenders = ["5B"]
 network = "polkadot-bulletin"
 zone = "us-east"
 provider = "GlobalStake"
@@ -433,5 +433,12 @@ provider = "Turboflakes"
 url = "wss://rpc-asset-hub-polkadot.luckyfriday.io"
 tenders = ["5C"]
 network = "polkadot-people"
+zone = "us-east"
+provider = "GlobalStake"
+
+[[endpoints]]
+url = "wss://rpc-bulletin-02.luckyfriday.io"
+tenders = ["5C"]
+network = "polkadot-bulletin"
 zone = "us-east"
 provider = "GlobalStake"
