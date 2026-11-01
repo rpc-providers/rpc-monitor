@@ -75,7 +75,7 @@ provider = "Dwellir"
 
 [[endpoints]]
 url = "wss://asset-hub-polkadot-rpc.n.dwellir.com"
-tenders = ["4","5"]
+tenders = ["4","5C"]
 network = "polkadot-assethub"
 zone = "eu-central"
 provider = "Dwellir"
