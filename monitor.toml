@@ -162,7 +162,7 @@ url = "wss://rpc-bulletin.luckyfriday.io"
 tenders = ["5C"]
 network = "polkadot-bulletin"
 zone = "us-east"
-provider = "LuckyFriday"
+provider = "GlobalStake"
 
 [[endpoints]]
 url = "wss://statemint.api.onfinality.io/public-ws"
@@ -434,4 +434,4 @@ url = "wss://rpc-asset-hub-polkadot.luckyfriday.io"
 tenders = ["5C"]
 network = "polkadot-people"
 zone = "us-east"
-provider = "LuckyFriday"
+provider = "GlobalStake"
