@@ -159,10 +159,10 @@ provider = "Helixstreet"
 
 [[endpoints]]
 url = "wss://rpc-bulletin.luckyfriday.io"
-tenders = ["5B"]
+tenders = ["5C"]
 network = "polkadot-bulletin"
 zone = "us-east"
-provider = "GlobalStake"
+provider = "LuckyFriday"
 
 [[endpoints]]
 url = "wss://statemint.api.onfinality.io/public-ws"
@@ -400,6 +400,7 @@ tenders = []
 network = "polkadot-assethub"
 zone = "us-east"
 provider = "Selvage Labs"
+
 [[endpoints]]
 url = "wss://rpc.assethub-polkadot.nodestake.org"
 tenders = ["5C"]
@@ -427,3 +428,10 @@ tenders = ["5C"]
 network = "polkadot-people"
 zone = "eu-central"
 provider = "Turboflakes"
+
+[[endpoints]]
+url = "wss://rpc-asset-hub-polkadot.luckyfriday.io"
+tenders = ["5C"]
+network = "polkadot-people"
+zone = "us-east"
+provider = "LuckyFriday"
