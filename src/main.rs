@@ -26,6 +26,9 @@ const ARCHIVE_BLOCK_NUMBER: u64 = 1000;
 // Request its storage hash, not the large runtime Wasm value.
 const RUNTIME_CODE_KEY: &str = "0x3a636f6465";
 
+mod tenders;
+use tenders::Tender;
+
 #[derive(Parser, Debug)]
 #[command(
     version,
@@ -66,6 +69,13 @@ enum Command {
 
 #[derive(ClapArgs, Debug)]
 struct ReportCommand {
+    /// Include only these tender IDs (repeatable; still respects tender dates).
+    #[arg(long = "tender", global = true, conflicts_with = "all_endpoints")]
+    tenders: Vec<String>,
+
+    /// Include every configured endpoint for the complete report period.
+    #[arg(long, global = true, conflicts_with = "tenders")]
+    all_endpoints: bool,
     #[arg(long, conflicts_with_all = ["start", "end"])]
     month: Option<String>,
 
@@ -117,6 +127,8 @@ struct Config {
     timeouts: Timeouts,
     #[serde(default)]
     report: ReportConfig,
+    #[serde(default)]
+    tenders: Vec<Tender>,
     endpoints: Vec<Endpoint>,
 }
 
@@ -170,6 +182,8 @@ struct Endpoint {
     zone: String,
     #[allow(dead_code)]
     provider: Option<String>,
+    #[serde(default)]
+    tenders: Vec<String>,
 }
 
 #[derive(Debug)]
@@ -265,7 +279,8 @@ async fn main() -> Result<()> {
             .then_with(|| a.endpoint.url.cmp(&b.endpoint.url))
     });
     let script_secs = run_started.elapsed().as_secs_f64();
-    let metrics = render_prometheus(&config.zone, timestamp_ms, script_secs, &results);
+    let mut metrics = render_prometheus(&config.zone, timestamp_ms, script_secs, &results);
+    metrics.push_str(&tenders::render_metadata(&config, &results, Utc::now())?);
     log_errors(&config.zone, &results);
 
     if args.dry_run {
@@ -330,6 +345,7 @@ fn load_config(path: &Path) -> Result<Config> {
 }
 
 fn validate_config(config: &Config, require_zone: bool) -> Result<()> {
+    tenders::validate(config)?;
     if require_zone && config.zone.trim().is_empty() {
         bail!("zone must not be empty");
     }
@@ -668,6 +684,13 @@ fn selected_endpoints(config: &Config) -> Vec<Endpoint> {
 
 async fn run_report(config: &Config, args: &ReportCommand) -> Result<()> {
     validate_config(config, false)?;
+
+    if !config.tenders.is_empty() || !args.tenders.is_empty() {
+        return tenders::run_report(config, args).await;
+    }
+    // Keep legacy installations working until their tender catalogue is supplied.
+    // Once any tenders are configured, dated membership becomes the default.
+    warn!("no tender catalogue configured; report includes all endpoints (legacy mode)");
 
     if let Some(ReportMode::Short(short_args)) = &args.mode {
         return run_short_report(config, args, short_args).await;
@@ -1723,24 +1746,28 @@ d"#
             concurrency: 1,
             timeouts: Timeouts::default(),
             report: ReportConfig::default(),
+            tenders: Vec::new(),
             endpoints: vec![
                 Endpoint {
                     url: "wss://z.example".to_owned(),
                     network: "polkadot".to_owned(),
                     zone: "us-east".to_owned(),
                     provider: None,
+                    tenders: Vec::new(),
                 },
                 Endpoint {
                     url: "wss://b.example".to_owned(),
                     network: "kusama".to_owned(),
                     zone: "eu-central".to_owned(),
                     provider: None,
+                    tenders: Vec::new(),
                 },
                 Endpoint {
                     url: "wss://a.example".to_owned(),
                     network: "polkadot".to_owned(),
                     zone: "eu-central".to_owned(),
                     provider: None,
+                    tenders: Vec::new(),
                 },
             ],
         };
@@ -1903,6 +1930,7 @@ d"#
                     network: "polkadot".to_owned(),
                     zone: "eu-central".to_owned(),
                     provider: None,
+                    tenders: Vec::new(),
                 },
                 archive_status: ArchiveStatus::Unknown,
                 get_block_secs: None,
@@ -1917,6 +1945,7 @@ d"#
                     network: "polkadot".to_owned(),
                     zone: "eu-central".to_owned(),
                     provider: None,
+                    tenders: Vec::new(),
                 },
                 archive_status: ArchiveStatus::Unknown,
                 get_block_secs: None,
@@ -1931,6 +1960,7 @@ d"#
                     network: "kusama".to_owned(),
                     zone: "eu-central".to_owned(),
                     provider: None,
+                    tenders: Vec::new(),
                 },
                 archive_status: ArchiveStatus::Unknown,
                 get_block_secs: None,
@@ -1953,6 +1983,7 @@ d"#
             network: "polkadot-bulletin".to_owned(),
             zone: "eu-central".to_owned(),
             provider: None,
+            tenders: Vec::new(),
         };
         let result = check_endpoint(
             endpoint,
@@ -1980,6 +2011,7 @@ d"#
                 network: "polkadot-bulletin".to_owned(),
                 zone: "us-east".to_owned(),
                 provider: None,
+                tenders: Vec::new(),
             },
             archive_status: ArchiveStatus::Pruned,
             get_block_secs: None,

@@ -2,6 +2,44 @@ output_path = "/var/www/prom/index.txt"
 lock_path = "/tmp/rpc-monitor.lock"
 concurrency = 1
 
+# UTC dates: start inclusive, end exclusive (day after the last tender day).
+# Tender IDs are case-sensitive. Empty endpoint memberships mean non-tender.
+
+[[tenders]]
+id = "2"
+start = "2025-02-01"
+end = "2025-08-01"
+
+[[tenders]]
+id = "2B"
+start = "2025-05-01"
+end = "2025-08-01"
+
+[[tenders]]
+id = "3"
+start = "2025-08-01"
+end = "2026-02-01"
+
+[[tenders]]
+id = "4"
+start = "2026-02-01"
+end = "2026-07-01"
+
+[[tenders]]
+id = "5"
+start = "2026-07-01"
+end = "2027-01-01"
+
+[[tenders]]
+id = "5B"
+start = "2026-06-01"
+end = "2027-01-01"
+
+[[tenders]]
+id = "5C"
+start = "2026-11-01"
+end = "2027-07-01"
+
 [timeouts]
 connect_secs = 5
 archive_secs = 20
@@ -30,252 +68,294 @@ kusama = "ksmcc3"
 
 [[endpoints]]
 url = "wss://bulletin-polkadot-rpc.n.dwellir.com"
+tenders = ["5C"]
 network = "polkadot-bulletin"
 zone = "eu-central"
 provider = "Dwellir"
 
 [[endpoints]]
 url = "wss://asset-hub-polkadot-rpc.n.dwellir.com"
+tenders = ["4","5"]
 network = "polkadot-assethub"
 zone = "eu-central"
 provider = "Dwellir"
 
 [[endpoints]]
 url = "wss://asset-hub-polkadot-2-rpc.n.dwellir.com"
+tenders = ["5C"]
 network = "polkadot-assethub"
 zone = "eu-central"
 provider = "Dwellir"
 
 [[endpoints]]
 url = "wss://people-polkadot-rpc.n.dwellir.com"
+tenders = ["4","5C"]
 network = "polkadot-people"
 zone = "eu-central"
 provider = "Dwellir"
 
 [[endpoints]]
 url = "wss://people-polkadot-2-rpc.n.dwellir.com"
+tenders = ["5C"]
 network = "polkadot-people"
 zone = "eu-central"
 provider = "Dwellir"
 
 [[endpoints]]
 url = "wss://rpc-polkadot.helixstreet.io"
+tenders = ["4","5"]
 network = "polkadot"
 zone = "eu-central"
 provider = "Helixstreet"
 
 [[endpoints]]
 url = "wss://rpc-people-polkadot.helixstreet.io"
+tenders = ["5"]
 network = "polkadot-people"
 zone = "eu-central"
 provider = "Helixstreet"
 
 [[endpoints]]
 url = "wss://rpc-asset-hub-polkadot.helixstreet.io"
+tenders = ["5"]
 network = "polkadot-assethub"
 zone = "eu-central"
 provider = "Helixstreet"
 
 [[endpoints]]
 url = "wss://rpc-bulletin-polkadot.helixstreet.io"
+tenders = ["5C"]
 network = "polkadot-bulletin"
 zone = "eu-central"
 provider = "Helixstreet"
 
 [[endpoints]]
 url = "wss://rpc-bulletin.luckyfriday.io"
+tenders = ["5B"]
 network = "polkadot-bulletin"
 zone = "us-east"
 provider = "GlobalStake"
 
 [[endpoints]]
 url = "wss://statemint.api.onfinality.io/public-ws"
+tenders = ["4","5"]
 network = "polkadot-assethub"
 zone = "us-east"
 provider = "onfinality"
 
 [[endpoints]]
 url = "wss://spectrum-03.simplystaking.xyz/RcHPQCOlyKRDTS/v4uorCoEDm5uOA/polkadotassethub/mn/420420419/dedicated_polkadot/archive/ws/"
+tenders = ["5"]
 network = "polkadot-assethub"
 zone = "us-east"
 provider = "Simply Staking"
 
 [[endpoints]]
 url = "wss://spectrum-03.spectrumnodes.xyz/RcHPQCOlyKRDTS/hmz0w-urDWa-2g/polkadotpeople/mn/1004/dedicated_polkadot/pruned/ws/"
+tenders = ["5C"]
 network = "polkadot-people"
 zone = "us-east"
 provider = "Simply Staking"
 
 [[endpoints]]
 url = "wss://spectrum-03.simplystaking.xyz/cG9sa2Fkb3QtMDMtOTFkMmYwZGYtcG9sa2Fkb3Q/9QbAeudedsupNA/polkadotbulletin/mainnet/"
+tenders = ["5B"]
 network = "polkadot-bulletin"
 zone = "us-east"
 provider = "Simply Staking"
 
 [[endpoints]]
 url = "wss://rpc-asset-hub-polkadot.stakeworld.io"
+tenders = ["5"]
 network = "polkadot-assethub"
 zone = "eu-central"
 provider = "stakeworld"
 
 [[endpoints]]
 url = "wss://rpc-bridge-hub-polkadot.stakeworld.io"
+tenders = ["5"]
 network = "polkadot-bridgehub"
 zone = "eu-central"
 provider = "stakeworld"
 
 [[endpoints]]
 url = "wss://rpc-people-polkadot.stakeworld.io"
+tenders = ["5"]
 network = "polkadot-people"
 zone = "eu-central"
 provider = "stakeworld"
 
 [[endpoints]]
 url = "wss://rpc2-people-polkadot.stakeworld.io"
+tenders = ["5C"]
 network = "polkadot-people"
 zone = "eu-central"
 provider = "stakeworld"
 
 [[endpoints]]
 url = "wss://rpc3-people-polkadot.stakeworld.io"
+tenders = ["5C"]
 network = "polkadot-people"
 zone = "eu-central"
 provider = "stakeworld"
 
 [[endpoints]]
 url = "wss://rpc-kusama.helixstreet.io"
+tenders = ["4","5"]
 network = "kusama"
 zone = "eu-central"
 provider = "Helixstreet"
 
 [[endpoints]]
 url = "wss://polkadot-mainnet.linkpool.com"
+tenders = ["5"]
 network = "polkadot"
 zone = "eu-central"
 provider = "LinkPool"
 
 [[endpoints]]
 url = "wss://polkadot-mainnet-asset-hub-pruned.linkpool.com"
+tenders = ["5C"]
 network = "polkadot-assethub"
 zone = "eu-central"
 provider = "LinkPool"
 
 [[endpoints]]
 url = "wss://polkadot-mainnet-asset-hub-pruned-sec.linkpool.com"
+tenders = ["5C"]
 network = "polkadot-assethub"
 zone = "eu-central"
 provider = "LinkPool"
 
 [[endpoints]]
 url = "wss://polkadot-mainnet-people.linkpool.com"
+tenders = ["5C"]
 network = "polkadot-people"
 zone = "eu-central"
 provider = "LinkPool"
 
 [[endpoints]]
 url = "wss://polkadot-mainnet-people-sec.linkpool.com"
+tenders = ["5C"]
 network = "polkadot-people"
 zone = "eu-central"
 provider = "LinkPool"
 
 [[endpoints]]
 url = "wss://polkadot-mainnet-bulletin.linkpool.com"
+tenders = ["5C"]
 network = "polkadot-bulletin"
 zone = "eu-central"
 provider = "LinkPool"
 
 [[endpoints]]
 url = "wss://rpc.interweb-it.com/polkadot"
+tenders = ["5"]
 network = "polkadot"
 zone = "eu-central"
 provider = "interweb"
 
 [[endpoints]]
 url = "wss://rpc.interweb-it.com/bulletin-polkadot"
+tenders = ["5C"]
 network = "polkadot-bulletin"
 zone = "eu-central"
 provider = "interweb"
 
 [[endpoints]]
 url = "wss://bridge-hub-polkadot.rotko.net"
+tenders = ["5"]
 network = "polkadot-bridgehub"
 zone = "ap-southeast"
 provider = "Rotko"
 
 [[endpoints]]
 url = "wss://collectives-polkadot.rotko.net"
+tenders = ["5"]
 network = "polkadot-collectives"
 zone = "ap-southeast"
 provider = "Rotko"
 
 [[endpoints]]
 url = "wss://coretime-polkadot.rotko.net"
+tenders = ["5"]
 network = "polkadot-coretime"
 zone = "ap-southeast"
 provider = "Rotko"
 
 [[endpoints]]
 url = "wss://people-polkadot.rotko.net"
+tenders = ["5"]
 network = "polkadot-people"
 zone = "ap-southeast"
 provider = "Rotko"
 
 [[endpoints]]
 url = "wss://asset-hub-polkadot-rpc.rotko.net"
+tenders = ["5C"]
 network = "polkadot-assethub"
 zone = "ap-southeast"
 provider = "Rotko"
 
 [[endpoints]]
 url = "wss://bulletin-polkadot-rpc.rotko.net"
+tenders = ["5C"]
 network = "polkadot-bulletin"
 zone = "ap-southeast"
 provider = "Rotko"
 
 [[endpoints]]
 url = "wss://asset-hub-kusama.rotko.net"
+tenders = ["5"]
 network = "kusama-assethub"
 zone = "ap-southeast"
 provider = "Rotko"
 
 [[endpoints]]
 url = "wss://bridge-hub-kusama.rotko.net"
+tenders = ["5"]
 network = "kusama-bridgehub"
 zone = "ap-southeast"
 provider = "Rotko"
 
 [[endpoints]]
 url = "wss://coretime-kusama.rotko.net"
+tenders = ["5"]
 network = "kusama-coretime"
 zone = "ap-southeast"
 provider = "Rotko"
 
 [[endpoints]]
 url = "wss://encointer-kusama.rotko.net"
+tenders = ["5"]
 network = "kusama-encointer"
 zone = "ap-southeast"
 provider = "Rotko"
 
 [[endpoints]]
 url = "wss://people-kusama.rotko.net"
+tenders = ["5"]
 network = "kusama-people"
 zone = "ap-southeast"
 provider = "Rotko"
 
 [[endpoints]]
 url = "wss://polkadot.gatotech.network"
+tenders = ["5"]
 network = "polkadot"
 zone = "eu-central"
 provider = "gatotech"
 
 [[endpoints]]
 url = "wss://kusama.gatotech.network"
+tenders = ["5"]
 network = "kusama"
 zone = "eu-central"
 provider = "gatotech"
 
 [[endpoints]]
 url = "wss://asset-hub-polkadot.gatotech.network"
+tenders = ["5"]
 network = "polkadot-assethub"
 zone = "eu-central"
 provider = "gatotech"
@@ -288,29 +368,34 @@ provider = "gatotech"
 
 [[endpoints]]
 url = "wss://asset-hub.selvagelabs.io"
+tenders = []
 network = "polkadot-assethub"
 zone = "us-east"
 provider = "Selvage Labs"
 [[endpoints]]
 url = "wss://rpc.assethub-polkadot.nodestake.org"
+tenders = ["5C"]
 network = "polkadot-assethub"
 zone = "eu-central"
 provider = "NodeStake"
 
 [[endpoints]]
 url = "wss://rpc.people-polkadot.nodestake.org"
+tenders = ["5C"]
 network = "polkadot-people"
 zone = "eu-central"
 provider = "NodeStake"
 
 [[endpoints]]
 url = "wss://asset-hub-polkadot.p.rpc.turboflakes.io"
+tenders = ["5C"]
 network = "polkadot-assethub"
 zone = "eu-central"
 provider = "Turboflakes"
 
 [[endpoints]]
 url = "wss://people-polkadot.p.rpc.turboflakes.io"
+tenders = ["5C"]
 network = "polkadot-people"
 zone = "eu-central"
 provider = "Turboflakes"

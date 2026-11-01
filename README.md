@@ -1,5 +1,54 @@
 # RPC Monitor
 
+## Tender selection
+
+Define overlapping tenders in the configuration and assign endpoint memberships:
+
+```toml
+[[tenders]]
+id = "example"
+start = "2026-11-01"
+end = "2027-07-01"
+
+[[endpoints]]
+url = "wss://rpc.example.org"
+network = "polkadot-people"
+zone = "eu-central"
+provider = "Example"
+tenders = ["example"]
+```
+
+Dates use UTC: start inclusive, end exclusive; omit end for an ongoing tender.
+Empty/missing endpoint memberships mean non-tender. Monitoring still checks
+every endpoint. Separate `rpc_endpoint_info` and `rpc_tender_active` gauges
+expose membership without changing existing measurement series. Metadata has
+no explicit timestamps. The reserved membership `__current` is 1 when any
+assigned tender is active and 0 otherwise; real memberships always have value 1.
+
+With a tender catalogue, full and short reports default to eligible endpoints
+and dates, merging overlapping memberships. Explicit IDs still respect dates:
+
+```bash
+rpc-monitor report --month 2026-11 --tender example
+rpc-monitor report --month 2026-11 --all-endpoints
+rpc-monitor report short --start 01-11-2026 --end 30-11-2026 --tender example
+```
+
+Repeat `--tender` for a union of tenders. Non-contiguous eligible periods are
+kept separate; latency/uptime statistics are weighted by available samples.
+Rows show applicable tender IDs after Network; the heading lists the selected
+tenders for the report period. Usage remains provider/chain-level and must
+not be summed across endpoint/slot rows sharing those totals. Old configs
+without any tender catalogue retain all-endpoint reports, with a stderr warning.
+Keep historical definitions and endpoint identities to reproduce old reports.
+
+`tools/prepare-tender-dashboard.py` prepares a separate Grafana V2 resource
+preview from an exported dashboard. Current is the default; specific tenders
+can be multi-selected, and All includes non-tender endpoints. It filters Rust
+endpoint panels by current metadata at the graph's end time, not historical
+membership. Federated usage remains unfiltered. Validate the preview before
+use; it requires the new metadata and does not update Grafana itself.
+
 RPC Monitor checks Substrate websocket RPC endpoints from one or more
 geographical monitoring zones and writes Prometheus textfile metrics. The
 monitor is intended to run from systemd timer units on regional monitor nodes.

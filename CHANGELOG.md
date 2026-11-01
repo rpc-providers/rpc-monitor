@@ -3,12 +3,21 @@
 All notable changes to RPC Monitor are recorded here. Releases use
 [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [1.2.0] - 2026-11-01
 
 ### Added
 
-- Dashboard migration utility creates a separate archive-status preview,
-  replacing block-zero timings/errors with latest-block metrics and uptime.
+- Dated tender catalogue and per-endpoint tender memberships, with validation
+  of IDs, references, duplicate entries and UTC date boundaries.
+- Separate `rpc_endpoint_info` and `rpc_tender_active` metadata gauges;
+  existing measurement labels and history are unchanged. The reserved
+  `__current` membership follows active tenders automatically.
+- Full and short reports support repeatable `--tender` and `--all-endpoints`.
+  Dated membership clips and merges eligible intervals without double-counting
+  overlaps; statistics use eligible samples. Rows show applicable tender IDs
+  after Network, and the heading lists the selected tenders for the report period.
+  The title and introductory metric descriptions retain the previous report style.
+  Provider/chain usage is explicitly identified as shared, not slot-level.
 
 ### Changed
 

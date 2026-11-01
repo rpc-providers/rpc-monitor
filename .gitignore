@@ -1,5 +1,11 @@
-# Rust build output
-/target/
+error.log
+zone.sh
+target/
+monitor.toml
+
+# Local maintenance tools and validation artifacts
+/tools/
+/validation/
 
 # Runtime and temporary files
 *.log
