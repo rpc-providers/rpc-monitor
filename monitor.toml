@@ -446,7 +446,7 @@ provider = "Turboflakes"
 [[endpoints]]
 url = "wss://rpc-asset-hub-polkadot.luckyfriday.io"
 tenders = ["5C"]
-network = "polkadot-assethub
+network = "polkadot-assethub"
 zone = "us-east"
 provider = "GlobalStake"
 
