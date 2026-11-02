@@ -200,6 +200,13 @@ zone = "eu-central"
 provider = "Simply Staking"
 
 [[endpoints]]
+url = "wss://spectrum-02.spectrumnodes.xyz/RcHPQCOlyKRDTS/hmz0w-urDWa-2g/polkadotpeople/mn/1004/dedicated_polkadot/pruned/ws/"
+tenders = ["5C"]
+network = "polkadot-people"
+zone = "eu-central"
+provider = "Simply Staking"
+
+[[endpoints]]
 url = "wss://spectrum-03.simplystaking.xyz/cG9sa2Fkb3QtMDMtOTFkMmYwZGYtcG9sa2Fkb3Q/9QbAeudedsupNA/polkadotbulletin/mainnet/"
 tenders = ["5B"]
 network = "polkadot-bulletin"
