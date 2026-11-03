@@ -456,3 +456,45 @@ tenders = ["5C"]
 network = "polkadot-bulletin"
 zone = "us-east"
 provider = "GlobalStake"
+
+[[endpoints]]
+url = "wss://polkadot-collectives-rpc.obis.dev"
+tenders = []
+network = "polkadot-collectives"
+zone = "eu-central"
+provider = "HoneyStake"
+
+[[endpoints]]
+url = "wss://polkadot-assethub-rpc.obis.dev"
+tenders = []
+network = "polkadot-assethub"
+zone = "eu-central"
+provider = "HoneyStake"
+
+[[endpoints]]
+url = "wss://polkadot-bridgehub-rpc.obis.dev"
+tenders = []
+network = "polkadot-bridgehub"
+zone = "eu-central"
+provider = "HoneyStake"
+
+[[endpoints]]
+url = "wss://polkadot-people-rpc.obis.dev"
+tenders = []
+network = "polkadot-people"
+zone = "eu-central"
+provider = "HoneyStake"
+
+[[endpoints]]
+url = "wss://polkadot-coretime-rpc.obis.dev"
+tenders = []
+network = "polkadot-coretime"
+zone = "eu-central"
+provider = "HoneyStake"
+
+[[endpoints]]
+url = "wss://polkadot-bulletin-rpc.obis.dev"
+tenders = []
+network = "polkadot-bulletin"
+zone = "eu-central"
+provider = "HoneyStake"
